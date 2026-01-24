@@ -1,0 +1,49 @@
+{
+  "name": "firstrunwizard",
+  "version": "5.0.0-dev.0",
+  "private": true,
+  "description": "A first run wizard that explains the usage of Nextcloud to new users",
+  "license": "AGPL-3.0-or-later",
+  "author": "Julius Härtl <jus@bitgrid.net>",
+  "type": "module",
+  "scripts": {
+    "build": "vite --mode production build",
+    "dev": "vite --mode development build",
+    "lint": "eslint --ext .js,.vue src",
+    "lint:fix": "eslint --ext .js,.vue src --fix",
+    "stylelint": "stylelint src/**/*.scss src/**/*.vue",
+    "stylelint:fix": "stylelint src/**/*.scss src/**/*.vue --fix",
+    "watch": "vite --mode development build --watch"
+  },
+  "browserslist": [
+    "extends @nextcloud/browserslist-config"
+  ],
+  "overrides": {
+    "vite-plugin-node-polyfills": "^0.24.0"
+  },
+  "dependencies": {
+    "@mdi/js": "^7.4.47",
+    "@nextcloud/axios": "^2.5.2",
+    "@nextcloud/dialogs": "^7.0.1",
+    "@nextcloud/initial-state": "^3.0.0",
+    "@nextcloud/l10n": "^3.4.0",
+    "@nextcloud/router": "^3.0.1",
+    "@nextcloud/vue": "^9.0.1",
+    "vue": "^3.5.24"
+  },
+  "devDependencies": {
+    "@nextcloud/browserslist-config": "^3.0.1",
+    "@nextcloud/eslint-config": "^9.0.0-rc.5",
+    "@nextcloud/event-bus": "^3.3.2",
+    "@nextcloud/stylelint-config": "^3.1.1",
+    "@nextcloud/typings": "^1.9.1",
+    "@nextcloud/vite-config": "^2.5.2",
+    "@vue/tsconfig": "^0.8.1",
+    "sass": "^1.92.1",
+    "vite": "^7.1.6"
+  },
+  "engines": {
+    "node": "^22.0.0",
+    "npm": "^10.5.1"
+  }
+}

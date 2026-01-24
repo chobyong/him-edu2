@@ -1,0 +1,26 @@
+OC.L10N.register(
+    "contacts",
+    {
+    "Contacts" : "Contacts",
+    "General" : "Umumiy",
+    "Rename" : "Nomini o'zgartirish",
+    "Delete" : "O'chirish",
+    "Download" : "Yuklab olish",
+    "Cancel" : "Bekor qilish",
+    "Add" : "Qo'shish",
+    "Save" : "Saqlash",
+    "Close" : "Yopish",
+    "Invalid image" : "Invalid image",
+    "Name" : "Name",
+    "Title" : "Sarlavha",
+    "Pending" : "Pending",
+    "None" : "Yo'q",
+    "Member" : "Member",
+    "Admin" : "Admin",
+    "Users" : "Users",
+    "Notes" : "Notes",
+    "Unknown" : "Unknown",
+    "Loading contacts …" : "Loading contacts …",
+    "Search contacts …" : "Search contacts …"
+},
+"nplurals=1; plural=0;");

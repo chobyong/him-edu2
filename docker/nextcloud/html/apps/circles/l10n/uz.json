@@ -1,0 +1,25 @@
+{ "translations": {
+    "Teams" : "Jamoalar",
+    "Personal" : "Personal",
+    "System" : "System",
+    "Open" : "Ochish",
+    "Invite" : "Taklif qiling",
+    "Hidden" : "Yashirin",
+    "Local" : "Local",
+    "Email address" : "E-pochta manzili",
+    "Contact" : "Aloqa",
+    "Member" : "Member",
+    "Admin" : "Admin",
+    "Owner" : "Owner",
+    "Open »%s«" : "ochish »%s«",
+    "Files" : "Fayllar",
+    "Accept" : "Qabul qiling",
+    "Open %s" : "Ochiq %s",
+    "Loading…" : "Yuklanmoqda...",
+    "No files in here" : "No files in here",
+    "No entries found in this folder" : "Ushbu papkada hech qanday yozuv topilmadi",
+    "Name" : "Name",
+    "Size" : "Size",
+    "Modified" : "Modified"
+},"pluralForm" :"nplurals=1; plural=0;"
+}

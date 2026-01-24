@@ -1,0 +1,24 @@
+{ "translations": {
+    "Rename" : "Rename",
+    "Delete" : "حذف کریں",
+    "Download" : "ڈاؤن لوڈ",
+    "can edit" : "تبدیل کر سکے ھیں",
+    "Cancel" : "منسوخ کریں",
+    "Add" : "شامل کریں",
+    "Save" : "حفظ",
+    "Close" : "بند ",
+    "Invalid image" : "غلط تصویر",
+    "Name" : "اسم",
+    "Title" : "عنوان",
+    "User" : "User",
+    "Group" : "Group",
+    "Email" : "email",
+    "Admin" : "ایڈمن",
+    "Owner" : "Owner",
+    "Notes" : "Notes",
+    "Location" : "مقام",
+    "Work" : "کام",
+    "Other" : "دیگر",
+    "Birthday" : "سالگرہ"
+},"pluralForm" :"nplurals=2; plural=(n != 1);"
+}

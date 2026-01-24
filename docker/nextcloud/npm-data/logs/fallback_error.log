@@ -1,0 +1,37 @@
+2026/01/16 07:06:35 [warn] 188#188: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/16 07:11:23 [warn] 188#188: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/16 07:13:07 [warn] 188#188: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/16 07:13:16 [warn] 188#188: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/16 07:20:02 [warn] 188#188: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/16 07:22:25 [warn] 188#188: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/16 07:23:13 [warn] 188#188: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/16 07:27:39 [warn] 188#188: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/16 07:27:53 [warn] 188#188: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/16 11:49:43 [warn] 170#170: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/17 01:28:46 [warn] 170#170: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/17 07:28:46 [warn] 170#170: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/17 09:37:55 [warn] 171#171: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/17 09:38:16 [warn] 171#171: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/17 12:51:37 [warn] 171#171: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/17 12:51:45 [warn] 171#171: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/17 12:51:52 [warn] 171#171: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/17 13:15:03 [error] 190#190: *1 connect() failed (111: Connection refused) while connecting to upstream, client: 10.0.1.163, server: nginxproxymanager, request: "GET /api/version/check HTTP/1.1", upstream: "http://127.0.0.1:3000/version/check", host: "10.0.1.142:81", referrer: "http://10.0.1.142:81/nginx/proxy"
+2026/01/17 13:15:03 [error] 190#190: *1 connect() failed (111: Connection refused) while connecting to upstream, client: 10.0.1.163, server: nginxproxymanager, request: "GET /api/ HTTP/1.1", upstream: "http://127.0.0.1:3000/", host: "10.0.1.142:81", referrer: "http://10.0.1.142:81/nginx/proxy"
+2026/01/17 13:26:19 [error] 216#216: *1 connect() failed (111: Connection refused) while connecting to upstream, client: 172.18.0.1, server: nginxproxymanager, request: "GET /api/version/check HTTP/1.1", upstream: "http://127.0.0.1:3000/version/check", host: "host.com:81", referrer: "http://host.com:81/certificates"
+2026/01/17 13:26:19 [error] 217#217: *3 connect() failed (111: Connection refused) while connecting to upstream, client: 10.0.1.163, server: nginxproxymanager, request: "GET /api/version/check HTTP/1.1", upstream: "http://127.0.0.1:3000/version/check", host: "10.0.1.142:81", referrer: "http://10.0.1.142:81/nginx/proxy"
+2026/01/19 13:31:07 [warn] 192#192: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/19 19:31:05 [warn] 192#192: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/20 01:31:05 [warn] 192#192: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/20 07:31:05 [warn] 192#192: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/20 13:31:05 [warn] 192#192: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/21 01:26:18 [warn] 173#173: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/21 07:26:18 [warn] 173#173: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/21 13:26:18 [warn] 173#173: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/21 19:26:18 [warn] 173#173: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/22 01:26:18 [warn] 173#173: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/22 07:26:18 [warn] 173#173: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/22 13:26:18 [warn] 173#173: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/22 19:26:18 [warn] 173#173: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/23 01:26:18 [warn] 173#173: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/23 07:26:18 [warn] 173#173: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4
+2026/01/23 13:26:18 [warn] 173#173: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:4

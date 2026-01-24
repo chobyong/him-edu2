@@ -1,0 +1,26 @@
+OC.L10N.register(
+    "notes",
+    {
+    "Notes" : "โน้ต",
+    "Error" : "ข้อผิดพลาด",
+    "New note" : "โน้ตใหม่",
+    "Preview" : "ตัวอย่าง",
+    "Files" : "ไฟล์",
+    "All notes" : "โน้ตทั้งหมด",
+    "Remove from favorites" : "เอาออกจากรายการโปรด",
+    "Add to favorites" : "เพิ่มในรายการโปรด",
+    "Share" : "แชร์",
+    "Rename" : "Rename",
+    "Delete note" : "ลบโน้ต",
+    "Edit" : "แก้ไข",
+    "Today" : "วันนี้",
+    "Yesterday" : "เมื่อวาน",
+    "This week" : "สัปดาห์นี้",
+    "Last week" : "สัปดาห์ที่แล้ว",
+    "This month" : "เดือนนี้",
+    "Last month" : "เดือนที่แล้ว",
+    "Loading …" : "กำลังโหลด …",
+    "Uncategorized" : "ไม่ได้จัดหมวดหมู่",
+    "Tasks" : "งาน"
+},
+"nplurals=1; plural=0;");

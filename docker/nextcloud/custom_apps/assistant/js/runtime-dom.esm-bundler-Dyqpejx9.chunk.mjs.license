@@ -1,0 +1,16 @@
+SPDX-License-Identifier: MIT
+SPDX-FileCopyrightText: Evan You
+
+This file is generated from multiple sources. Included packages:
+- @vue/reactivity
+	- version: 3.5.25
+	- license: MIT
+- @vue/runtime-core
+	- version: 3.5.25
+	- license: MIT
+- @vue/runtime-dom
+	- version: 3.5.25
+	- license: MIT
+- @vue/shared
+	- version: 3.5.25
+	- license: MIT

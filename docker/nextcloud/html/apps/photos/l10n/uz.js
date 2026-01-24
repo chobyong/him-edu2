@@ -1,0 +1,27 @@
+OC.L10N.register(
+    "photos",
+    {
+    "Photos" : "Photos",
+    "Videos" : "Videos",
+    "People" : "Shaxs",
+    "Favorites" : "Favorites",
+    "Shared with you" : "Shared with you",
+    "Tags" : "Tags",
+    "Places" : "Joylar",
+    "Back" : "Orqaga",
+    "Save" : "Saqlash",
+    "Copy public link" : "Umumiy havoladan nusxa oling",
+    "Favorite" : "Favorite",
+    "Add to {destination}" : " {destination}ni qo`shish",
+    "Home" : "Home",
+    "General" : "Umumiy",
+    "Remove from favorites" : "Sevimlilardan olib tashlang",
+    "Last week" : "O`tgan yil",
+    "Details" : "Details",
+    "Cancel" : "Bekor qilish",
+    "Confirm" : "Tasdiqlash",
+    "Back to {folder}" : "{folder}ga qaytish",
+    "View" : "Ko'rish",
+    "Add" : "Add"
+},
+"nplurals=1; plural=0;");

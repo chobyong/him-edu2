@@ -1,0 +1,14 @@
+./docker/nextcloud/html/core/fonts/NotoSansSC-Regular.ttf
+./docker/nextcloud/html/core/skeleton/Nextcloud Manual.pdf
+./docker/nextcloud/html/apps/password_policy/lists/list-9.php
+./docker/nextcloud/html/apps/password_policy/lists/list-8.php
+./docker/nextcloud/html/apps/password_policy/lists/list-7.php
+./docker/nextcloud/html/apps/password_policy/lists/list-6.php
+./docker/nextcloud/html/dist/core-common.js.map
+./docker/nextcloud/custom_apps/richdocumentscode/collabora/Collabora_Online.AppImage
+./docker/nextcloud/custom_apps/calendar/js/calendar-main.js.map
+./docker/nextcloud/nextclouddb/ibdata1
+./docker/nextcloud/nextclouddb/ibtmp1
+./docker/nextcloud/nextclouddb/ib_logfile0
+./docker/nextcloud/data/him/files/Nextcloud Manual.pdf
+./.git/objects/pack/pack-0acd00eb425a1bac9ae24000b0aa709d4615f06f.pack

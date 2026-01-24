@@ -1,0 +1,10 @@
+{
+  "presentation": {
+    "A11yCheckDeck": "false",
+    "NavigatorDeck": "false",
+    "PropertyDeck": "true",
+    "SdCustomAnimationDeck": "false",
+    "SdMasterPagesDeck": "false",
+    "StyleListDeck": "false"
+  }
+}
