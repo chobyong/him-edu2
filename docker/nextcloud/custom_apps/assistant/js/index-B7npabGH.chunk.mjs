@@ -1,2 +1,0 @@
-function f(n){return n&&n.split("/").map(encodeURIComponent).join("/")}function g(n){return n.replace(/\\/g,"/").replace(/.*\//,"")}function h(...n){return l(...n)}function l(...n){if(arguments.length<1)return"";const e=n.filter(t=>t.length>0);if(e.length<1)return"";const c=e[e.length-1],u=e[0].charAt(0)==="/",a=c.charAt(c.length-1)==="/",i=e.reduce((t,r)=>t.concat(r.split("/")),[]);let o=!u;const s=i.reduce((t,r)=>r===""?t:o?(o=!1,t+r):t+"/"+r,"");return a?s+"/":s}export{g as b,f as e,h as j};
-//# sourceMappingURL=index-B7npabGH.chunk.mjs.map

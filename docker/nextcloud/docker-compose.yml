@@ -87,7 +87,7 @@ services:
     volumes:
       - ./npm-data:/data
       - ./letsencrypt:/etc/letsencrypt
-      - /opt/apps/landing/www:/var/www/html:ro
+      - /opt/him-edu2/apps/landing/www:/var/www/html:ro
 networks:
   cloud:
     name: cloud

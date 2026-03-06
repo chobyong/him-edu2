@@ -1,7 +1,0 @@
-SPDX-License-Identifier: AGPL-3.0
-SPDX-FileCopyrightText: Julien Veyssier
-
-This file is generated from multiple sources. Included packages:
-- assistant
-	- version: 2.12.0
-	- license: AGPL-3.0
