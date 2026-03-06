@@ -33,6 +33,7 @@ KOLIBRI_ADMIN_PASS="ABCD_1234"
 
 PROJECT_DIR="/opt/him-edu2"
 DOCKER_DIR="$PROJECT_DIR/docker/nextcloud"
+GITHUB_REPO="https://github.com/chobyong/him-edu2.git"
 
 # =============================================================================
 # HELPERS
@@ -45,6 +46,21 @@ require_root() {
     echo "Please run with sudo: sudo bash $0"
     exit 1
   fi
+}
+
+
+# =============================================================================
+# 0. CLONE PROJECT FROM GITHUB
+# =============================================================================
+clone_project() {
+  if [[ -f "$DOCKER_DIR/docker-compose.yml" ]]; then
+    success "Project already at $PROJECT_DIR, skipping clone."
+    return
+  fi
+  info "Cloning project from GitHub..."
+  apt-get install -y -qq git
+  git clone "$GITHUB_REPO" "$PROJECT_DIR"
+  success "Project cloned to $PROJECT_DIR."
 }
 
 # =============================================================================
@@ -377,6 +393,7 @@ print_summary() {
 # MAIN
 # =============================================================================
 require_root
+clone_project
 install_packages
 install_kolibri
 configure_hostapd
