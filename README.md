@@ -1,14 +1,14 @@
-# HimEdu Server Setup
+# Him Edu Server Setup
 
-Automated setup script for the HimEdu educational hotspot server.
+Automated setup script for the Him Edu educational hotspot server.
 Deploys Kolibri, NextCloud, a WiFi access point, and a captive portal
-on a Raspberry Pi 5 running Debian.
+on a server running Debian.
 
 ---
 
 ## Requirements
 
-- Raspberry Pi 5 (arm64) with Debian trixie
+- A server with Debian trixie
 - Wired internet connection (`end0`) during setup
 - WiFi interface (`wlan0`) that supports AP mode
 - The `/opt/him-edu2/` project directory present on the server
