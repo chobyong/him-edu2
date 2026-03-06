@@ -298,6 +298,18 @@ start_nextcloud() {
     "$DOCKER_DIR/letsencrypt" \
     "$DOCKER_DIR/redis"
 
+  # Set ownership for Docker container users
+  # NextCloud (www-data = uid 33): html, custom_apps, config, data
+  chown -R 33:33 \
+    "$DOCKER_DIR/html" \
+    "$DOCKER_DIR/custom_apps" \
+    "$DOCKER_DIR/config" \
+    "$DOCKER_DIR/data"
+  # MariaDB (mysql = uid 999): nextclouddb
+  chown -R 999:999 "$DOCKER_DIR/nextclouddb"
+  # Redis (uid 999): redis data
+  chown -R 999:999 "$DOCKER_DIR/redis"
+
   docker compose -f "$DOCKER_DIR/docker-compose.yml" pull --quiet
   docker compose -f "$DOCKER_DIR/docker-compose.yml" up -d
 
@@ -316,8 +328,6 @@ start_nextcloud() {
   INSTALLED=$(docker exec -u www-data nextcloud php occ status 2>/dev/null | grep "installed: true" || true)
   if [[ -z "$INSTALLED" ]]; then
     info "Running NextCloud first-time install..."
-    chown -R 33:33 "$DOCKER_DIR/config" "$DOCKER_DIR/data"
-
     if [[ -f "$DOCKER_DIR/config/config.php" ]]; then
       sed -i "s/'installed' => true,/'installed' => false,/" "$DOCKER_DIR/config/config.php" || true
     fi
