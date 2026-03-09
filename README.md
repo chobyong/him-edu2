@@ -1,31 +1,25 @@
-# Him Edu Server Setup
+# HimEdu Server Setup
 
-Automated setup script for the Him Edu educational hotspot server.
+Automated setup script for the HimEdu educational hotspot server.
 Deploys Kolibri, NextCloud, a WiFi access point, and a captive portal
-on a server running Debian.
+on a Raspberry Pi 5 (or any Debian-based server).
 
 ---
 
 ## Requirements
 
-- A server with Debian trixie
-- Wired internet connection (`end0`) during setup
-- WiFi interface (`wlan0`) that supports AP mode
-- The `/opt/him-edu2/` project directory present on the server
+- Debian-based server (Raspberry Pi 5, PC, VM) — arm64 or x86_64
+- Wired internet connection during setup
+- WiFi adapter that supports AP mode (auto-detected — no config needed)
 
 ---
 
 ## Quick Start
 
-**1. Copy the project to the new server:**
+On the new server, run:
 ```bash
-rsync -av /opt/him-edu2/ user@NEW_SERVER_IP:/opt/him-edu2/
-scp /home/him/setup.sh /home/him/README.md user@NEW_SERVER_IP:/home/him/
-```
-
-**2. SSH into the new server and run:**
-```bash
-sudo bash /home/him/setup.sh
+curl -O https://raw.githubusercontent.com/chobyong/him-edu2/main/setup.sh
+sudo bash setup.sh
 ```
 
 Setup takes 5–15 minutes depending on internet speed (pulls Docker images and installs Python packages).
@@ -59,15 +53,25 @@ KOLIBRI_FACILITY="HimEdu"       # School/facility name in Kolibri
 
 ## What Each Step Does
 
+### Step 0 — Clone Project from GitHub
+Downloads the project files (docker-compose.yml, landing page, etc.) from GitHub to `/opt/him-edu2/`.
+Skipped if the project is already present.
+
 ### Step 1 — Install System Packages
-Installs all required system packages via `apt`:
-- `hostapd` — WiFi access point daemon (config only, NM manages the AP)
+Installs Docker via the official `get.docker.com` script (handles repo setup automatically on any Debian variant — Raspberry Pi OS, Ubuntu, Debian trixie/bookworm, etc.).
+
+Also installs via `apt`:
+- `hostapd` — WiFi access point daemon
 - `iptables-persistent` / `netfilter-persistent` — saves firewall rules across reboots
-- `python3-venv` / `python3-full` — needed to create the Kolibri virtual environment
-- `docker.io` + `docker-compose-plugin` — container runtime for NextCloud stack
+- `python3-venv` / `python3-full` — needed for the Kolibri virtual environment
 - `iw` — wireless interface diagnostics
 
-Enables the Docker service and adds the configured user to the `docker` group so they can run `docker` commands without `sudo` after re-login.
+Enables the Docker service and adds the configured user to the `docker` group.
+
+### WiFi Interface Detection
+After packages are installed, the script automatically detects the WiFi interface name (e.g. `wlan0`, `wlp2s0`, `wlx...`) using `iw dev` and sysfs. The detected name is used for all subsequent AP and firewall steps — no manual configuration needed.
+
+If no WiFi interface is found, a warning is shown and the script continues (NextCloud and Kolibri still install fully).
 
 ### Step 2 — Install Kolibri
 - Creates a Python virtual environment at `/opt/kolibri-venv`
@@ -84,38 +88,40 @@ Runs before Kolibri starts to ensure the DB is configured correctly:
 - If the user already exists (re-run), updates the password instead
 
 ### Step 3 — Configure hostapd
-Writes `/etc/hostapd/hostapd.conf` with:
-- Interface: `wlan0`, 2.4GHz, channel 6, WPA2-PSK
+Writes `/etc/hostapd/hostapd.conf` using the auto-detected WiFi interface with:
+- 2.4GHz, channel 6, WPA2-PSK
 - SSID and password from configuration variables
 
 Note: hostapd config is written for reference and fallback. The actual AP is managed by NetworkManager in Step 4.
 
 ### Step 4 — NetworkManager AP + DHCP
-Creates a NetworkManager WiFi connection (`HimEdu-AP`) on `wlan0` with:
+Creates a NetworkManager WiFi connection (`HimEdu-AP`) on the detected interface with:
 - **mode: ap** — puts the interface into access point mode
 - **ipv4.method: shared** — NetworkManager runs an internal dnsmasq to assign IP addresses (`10.42.0.x`) to connecting clients automatically
 - Static IP `10.42.0.1/24` assigned to the server on the WiFi interface
 - WPA2 security using the configured SSID and password
 
-Also writes `/etc/NetworkManager/dnsmasq-shared.d/captive-portal.conf` which makes NM's dnsmasq resolve **all domain names** to `10.42.0.1` — this is what triggers the captive portal prompt on client devices.
+Also writes `/etc/NetworkManager/dnsmasq-shared.d/captive-portal.conf` which makes NM's dnsmasq resolve **all domain names** to `10.42.0.1` — this triggers the captive portal prompt on client devices.
 
 ### Step 5 — Walled Garden (iptables)
 Sets up firewall rules to intercept and redirect WiFi client traffic:
-- Enables **IP forwarding** so the Pi can route traffic between WiFi clients and the wired network
-- **MASQUERADE** — lets WiFi clients share the Pi's wired internet connection (NAT)
-- **PREROUTING DNAT** — redirects all HTTP (port 80) requests from WiFi clients to the Pi's local Nginx Proxy Manager, showing the landing page instead of the internet
+- Enables **IP forwarding** so the server can route traffic between WiFi clients and the wired network
+- **MASQUERADE** — lets WiFi clients share the server's wired internet connection (NAT)
+- **PREROUTING DNAT** — redirects all HTTP (port 80) requests from WiFi clients to the local Nginx Proxy Manager, showing the landing page instead of the internet
 - Writes an **NM dispatcher script** (`/etc/NetworkManager/dispatcher.d/99-walled-garden`) that re-applies these rules automatically whenever the WiFi AP comes up after a reboot
 - Saves all rules with `netfilter-persistent` for persistence
 
 ### Step 6 — NextCloud Docker Stack
 - Creates all required data subdirectories under `/opt/him-edu2/docker/nextcloud/`
-- Pulls latest Docker images for all services
-- Starts the full stack: **NextCloud**, **MariaDB**, **Redis**, **Collabora**, **Nginx Proxy Manager**
+- Sets correct ownership for each Docker container user (www-data uid 33, mysql/redis uid 999)
+- Pulls latest Docker images and starts the full stack: **NextCloud**, **MariaDB**, **Redis**, **Collabora**, **Nginx Proxy Manager**
 - Waits for MariaDB to be ready before proceeding
+- Fixes `config.php` ownership (NextCloud container may create it as root on first start)
 - Runs `occ maintenance:install` if NextCloud is not yet installed
+- Auto-detects the server's wired IP for trusted domains
 - Sets **trusted domains** (wired IP, WiFi IP, local hostname)
-- Relaxes password policy to allow the configured password
-- Creates the admin user and removes the default `admin` account
+- Temporarily disables the `password_policy` app to bypass the breach-database check, creates the `him` admin user, then re-enables the app
+- Deletes the default `admin` account
 
 ---
 
@@ -160,24 +166,23 @@ All HTTP traffic from WiFi clients is redirected to the landing page. DNS resolv
 
 ```
 /home/him/
-├── setup.sh              ← setup script
-└── README.md             ← this file
+└── setup.sh              <- setup script (download from GitHub)
 
 /opt/him-edu2/
 ├── apps/
-│   └── landing/www/      ← landing page (index.html, styles.css)
+│   └── landing/www/      <- landing page (index.html, styles.css)
 └── docker/nextcloud/
     ├── docker-compose.yml
-    ├── config/           ← NextCloud config (auto-generated)
-    ├── data/             ← NextCloud user files
-    ├── html/             ← NextCloud app files
-    ├── nextclouddb/      ← MariaDB data files
-    ├── redis/            ← Redis data
-    ├── npm-data/         ← Nginx Proxy Manager config
-    └── letsencrypt/      ← SSL certificates
+    ├── config/           <- NextCloud config (auto-generated)
+    ├── data/             <- NextCloud user files
+    ├── html/             <- NextCloud app files
+    ├── nextclouddb/      <- MariaDB data files
+    ├── redis/            <- Redis data
+    ├── npm-data/         <- Nginx Proxy Manager config
+    └── letsencrypt/      <- SSL certificates
 
-/opt/kolibri-venv/        ← Kolibri Python virtualenv
-/opt/kolibri-data/        ← Kolibri database and content
+/opt/kolibri-venv/        <- Kolibri Python virtualenv
+/opt/kolibri-data/        <- Kolibri database and content
 ```
 
 ---
@@ -200,14 +205,17 @@ The script is **idempotent** — safe to run again on an existing server:
 
 **AP not showing up / SSID not visible:**
 ```bash
+# Check what WiFi interface was detected
+iw dev
+
 # Check connection status
 nmcli device status
 nmcli con show HimEdu-AP
 
-# Bring it up manually
+# Bring it up manually (replace wlan0 with your interface name)
 sudo nmcli con up HimEdu-AP
 
-# Verify wlan0 has the right IP
+# Verify the interface has the right IP
 ip addr show wlan0
 ```
 
@@ -239,7 +247,7 @@ sudo nmcli con up HimEdu-AP
 # Check iptables redirect rule
 sudo iptables -t nat -L PREROUTING -n --line-numbers
 
-# Re-apply walled garden rules manually
+# Re-apply walled garden rules manually (replace wlan0 with your interface)
 sudo /etc/NetworkManager/dispatcher.d/99-walled-garden wlan0 up
 
 # Check captive portal DNS config exists
@@ -340,6 +348,8 @@ sudo sed -i "s/'installed' => true,/'installed' => false,/" \
 sudo chown -R 33:33 /opt/him-edu2/docker/nextcloud/config \
                     /opt/him-edu2/docker/nextcloud/data
 
+docker exec nextcloud chown www-data:www-data /var/www/html/config/config.php
+
 docker exec -u www-data nextcloud php occ maintenance:install \
   --database mysql --database-host nextclouddb \
   --database-name nextcloud --database-user nextcloud \
@@ -402,8 +412,8 @@ newgrp docker
 
 **Docker images fail to pull (no internet):**
 ```bash
-# Check wired connection
-ip addr show end0
+# Check wired connection and find your interface name
+ip addr show
 ping -c 3 8.8.8.8
 
 # If internet is fine, check DNS
