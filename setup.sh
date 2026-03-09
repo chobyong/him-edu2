@@ -152,47 +152,8 @@ EOF
 
   systemctl daemon-reload
   systemctl enable kolibri
-
-  # Initialize DB and create admin user before starting the service
-  setup_kolibri_admin
-
   systemctl start kolibri
   success "Kolibri service enabled and started (port $KOLIBRI_PORT)."
-}
-
-# =============================================================================
-# 2b. KOLIBRI ADMIN USER
-# =============================================================================
-setup_kolibri_admin() {
-  info "Setting up Kolibri admin user..."
-
-  # Run as KOLIBRI_USER so DB files are owned correctly
-  sudo -u "$KOLIBRI_USER" KOLIBRI_HOME="$KOLIBRI_HOME" \
-    "$KOLIBRI_VENV/bin/kolibri" manage shell -- -c "
-from kolibri.core.auth.models import Facility, FacilityUser
-from kolibri.core.device.models import DevicePermissions
-
-facility, _ = Facility.objects.get_or_create(name='${KOLIBRI_FACILITY}')
-
-if FacilityUser.objects.filter(username='${KOLIBRI_ADMIN_USER}').exists():
-    user = FacilityUser.objects.get(username='${KOLIBRI_ADMIN_USER}')
-    user.set_password('${KOLIBRI_ADMIN_PASS}')
-    user.save()
-    print('Kolibri: updated password for existing user ${KOLIBRI_ADMIN_USER}')
-else:
-    user = FacilityUser(username='${KOLIBRI_ADMIN_USER}', facility=facility)
-    user.set_password('${KOLIBRI_ADMIN_PASS}')
-    user.save()
-    print('Kolibri: created user ${KOLIBRI_ADMIN_USER}')
-
-DevicePermissions.objects.update_or_create(
-    user=user,
-    defaults={'is_superuser': True, 'can_manage_content': True}
-)
-print('Kolibri: device permissions granted to ${KOLIBRI_ADMIN_USER}')
-" 2>&1 | grep -v "^\[.*INFO\|override"
-
-  success "Kolibri admin ready — login: $KOLIBRI_ADMIN_USER / $KOLIBRI_ADMIN_PASS"
 }
 
 # =============================================================================
