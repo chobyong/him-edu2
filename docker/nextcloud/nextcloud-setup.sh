@@ -13,7 +13,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # 0. Install Docker and Docker Compose
-echo "[0/4] Installing Docker and Docker Compose..."
+echo "[0/5] Installing Docker and Docker Compose..."
 apt-get update -qq
 DEBIAN_FRONTEND=noninteractive apt-get install -y docker.io docker-compose-plugin
 systemctl enable --now docker
