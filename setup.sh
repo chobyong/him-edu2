@@ -204,6 +204,11 @@ EOF
 configure_nm_ap() {
   info "Configuring NetworkManager AP connection..."
 
+  if ! ip link show "$WLAN_IF" &>/dev/null; then
+    echo "[WARN] $WLAN_IF not found — skipping AP setup. Run manually when WiFi hardware is present."
+    return 0
+  fi
+
   nmcli con delete "HimEdu-AP" 2>/dev/null || true
 
   nmcli con add \
@@ -223,7 +228,7 @@ configure_nm_ap() {
 address=/#/${AP_IP}
 EOF
 
-  nmcli con up "HimEdu-AP"
+  nmcli con up "HimEdu-AP" || echo "[WARN] Could not bring up HimEdu-AP — check wlan0 supports AP mode."
   success "AP up — ${WLAN_IF} at ${AP_IP}/24, SSID: ${AP_SSID}."
 }
 
