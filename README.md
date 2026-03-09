@@ -16,28 +16,24 @@ on a Raspberry Pi 5 (or any Debian-based server).
 
 ## Quick Start
 
-On the new server, run:
+**Step 1 — Install prerequisites and Tailscale (for remote access):**
 ```bash
-sudo apt install curl
-sudo apt install git
-```
-Install Tailscale 
-```bash
- curl -fsSL https://tailscale.com/install.sh | sudo sh
-
-tailscale up -ssh
+sudo apt install -y git curl
+curl -fsSL https://tailscale.com/install.sh | sudo sh
+sudo tailscale up --ssh
 ```
 
-Download from github to install rest
-
+**Step 2 — Clone the project and run setup:**
 ```bash
-curl -O https://raw.githubusercontent.com/chobyong/him-edu2/main/setup.sh
-sudo bash setup.sh
+sudo git clone https://github.com/chobyong/him-edu2.git /opt/him-edu2
+sudo bash /opt/him-edu2/setup.sh
 ```
 
 Setup takes 5–15 minutes depending on internet speed.
 
 After setup, connect to the `him-edu` WiFi or open a browser to `http://<wired-ip>:8080` (Kolibri) or `http://<wired-ip>:8081` (NextCloud).
+
+All scripts (`kolibri-channels.sh`, `kolibri-sync.sh`, `nextcloud-apps.sh`, `reset.sh`) are available immediately in `/opt/him-edu2/` after the clone.
 
 ---
 
