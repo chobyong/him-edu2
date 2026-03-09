@@ -238,8 +238,12 @@ AP_SUBNET="10.42.0.0/24"
 
 if [ "$INTERFACE" = "wlan0" ] && [ "$EVENT" = "up" ]; then
   echo 1 > /proc/sys/net/ipv4/ip_forward
-  iptables -t nat -F
-  iptables -F FORWARD 2>/dev/null || true
+
+  # Remove only our specific rules (don't flush — that breaks Docker networking)
+  iptables -t nat -D POSTROUTING -s "$AP_SUBNET" -j MASQUERADE 2>/dev/null || true
+  iptables -t nat -D PREROUTING -i wlan0 -p tcp --dport 80 -j DNAT --to-destination "${AP_IP}:80" 2>/dev/null || true
+  iptables -D FORWARD -i wlan0 -j ACCEPT 2>/dev/null || true
+  iptables -D FORWARD -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || true
 
   UPSTREAM=$(ip route show default 2>/dev/null | awk '/default/ {print $5}' | grep -v wlan0 | head -1)
   if [ -n "$UPSTREAM" ]; then
@@ -253,11 +257,13 @@ fi
 DISPATCH
   chmod +x /etc/NetworkManager/dispatcher.d/99-walled-garden
 
-  # Apply rules now
+  # Apply rules now (delete then re-add — don't flush, that breaks Docker networking)
   local UPSTREAM
-  UPSTREAM=$(ip route show default 2>/dev/null | awk '/default/ {print $5}' | grep -v wlan0 | head -1 || true)
-  iptables -t nat -F
-  iptables -F FORWARD 2>/dev/null || true
+  UPSTREAM=$(ip route show default 2>/dev/null | awk '/default/ {print $5}' | grep -v "$WLAN_IF" | head -1 || true)
+  iptables -t nat -D POSTROUTING -s "$AP_SUBNET" -j MASQUERADE 2>/dev/null || true
+  iptables -t nat -D PREROUTING -i "$WLAN_IF" -p tcp --dport 80 -j DNAT --to-destination "${AP_IP}:80" 2>/dev/null || true
+  iptables -D FORWARD -i "$WLAN_IF" -j ACCEPT 2>/dev/null || true
+  iptables -D FORWARD -o "$WLAN_IF" -m state --state RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || true
   if [[ -n "$UPSTREAM" ]]; then
     iptables -t nat -A POSTROUTING -s "$AP_SUBNET" -o "$UPSTREAM" -j MASQUERADE
     iptables -A FORWARD -i "$WLAN_IF" -o "$UPSTREAM" -j ACCEPT
