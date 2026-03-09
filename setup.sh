@@ -50,6 +50,30 @@ require_root() {
 
 
 # =============================================================================
+# WIFI INTERFACE DETECTION
+# =============================================================================
+detect_wifi_interface() {
+  info "Detecting WiFi interface..."
+  local iface
+
+  # Try iw first (most reliable for wireless interfaces)
+  iface=$(iw dev 2>/dev/null | awk '/Interface/ {print $2; exit}')
+
+  # Fallback: scan sysfs for wireless interfaces
+  if [[ -z "$iface" ]]; then
+    iface=$(find /sys/class/net -maxdepth 2 -name wireless -type d 2>/dev/null | head -1 | awk -F/ '{print $(NF-1)}')
+  fi
+
+  if [[ -n "$iface" ]]; then
+    WLAN_IF="$iface"
+    success "WiFi interface detected: $WLAN_IF"
+  else
+    echo "[WARN] No WiFi interface found — using default: $WLAN_IF"
+    echo "       AP setup may fail. Plug in a WiFi adapter and re-run if needed."
+  fi
+}
+
+# =============================================================================
 # 0. CLONE PROJECT FROM GITHUB
 # =============================================================================
 clone_project() {
@@ -204,11 +228,6 @@ EOF
 configure_nm_ap() {
   info "Configuring NetworkManager AP connection..."
 
-  if ! ip link show "$WLAN_IF" &>/dev/null; then
-    echo "[WARN] $WLAN_IF not found — skipping AP setup. Run manually when WiFi hardware is present."
-    return 0
-  fi
-
   nmcli con delete "HimEdu-AP" 2>/dev/null || true
 
   nmcli con add \
@@ -228,7 +247,7 @@ configure_nm_ap() {
 address=/#/${AP_IP}
 EOF
 
-  nmcli con up "HimEdu-AP" || echo "[WARN] Could not bring up HimEdu-AP — check wlan0 supports AP mode."
+  nmcli con up "HimEdu-AP"
   success "AP up — ${WLAN_IF} at ${AP_IP}/24, SSID: ${AP_SSID}."
 }
 
@@ -415,6 +434,7 @@ print_summary() {
 require_root
 clone_project
 install_packages
+detect_wifi_interface
 install_kolibri
 configure_hostapd
 configure_nm_ap
