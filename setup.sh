@@ -371,6 +371,19 @@ start_nextcloud() {
   else
     success "NextCloud already installed, skipping first-time setup."
   fi
+
+  # Install NextCloud apps (idempotent — skips already-enabled apps)
+  info "Installing NextCloud apps..."
+  for app in notes richdocuments calendar contacts whiteboard mail forms; do
+    if docker exec --workdir /var/www/html -u www-data nextcloud php occ app:list 2>/dev/null | grep -q "^  - ${app}:"; then
+      echo "  [skip] ${app} already enabled"
+    else
+      echo "  [install] ${app}..."
+      docker exec --workdir /var/www/html -u www-data nextcloud php occ app:install "$app" 2>&1 \
+        | grep -v "^$" || true
+    fi
+  done
+  success "NextCloud apps installed."
 }
 
 # =============================================================================
