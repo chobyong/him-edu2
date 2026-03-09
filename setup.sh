@@ -378,18 +378,28 @@ start_nextcloud() {
     success "NextCloud already installed, skipping first-time setup."
   fi
 
-  # Install NextCloud apps (idempotent — skips already-enabled apps)
+  # Install NextCloud apps
   info "Installing NextCloud apps..."
-  for app in notes richdocuments calendar contacts whiteboard mail forms; do
-    if docker exec --workdir /var/www/html -u www-data nextcloud php occ app:list 2>/dev/null | grep -q "^  - ${app}:"; then
-      echo "  [skip] ${app} already enabled"
-    else
-      echo "  [install] ${app}..."
-      docker exec --workdir /var/www/html -u www-data nextcloud php occ app:install "$app" 2>&1 \
-        | grep -v "^$" || true
-    fi
-  done
-  success "NextCloud apps installed."
+  local HTTP_CODE
+  HTTP_CODE=$(docker exec --workdir / nextcloud curl -s --max-time 15 -o /dev/null -w '%{http_code}' https://apps.nextcloud.com 2>/dev/null || echo "000")
+  if [[ "$HTTP_CODE" != "200" ]]; then
+    echo "[WARN] No internet access from inside NextCloud container — skipping app install."
+    echo "       To install apps later, fix Docker networking and run: sudo bash /opt/him-edu2/nextcloud-apps.sh"
+  else
+    local NC_APPS=(notes richdocuments calendar contacts whiteboard mail forms)
+    for app in "${NC_APPS[@]}"; do
+      if docker exec --workdir /var/www/html -u www-data nextcloud php occ app:list 2>/dev/null | grep -q "^  - ${app}:"; then
+        echo "  [skip]    ${app} already enabled"
+      elif docker exec --workdir /var/www/html -u www-data nextcloud php occ app:list --disabled 2>/dev/null | grep -q "^  - ${app}:"; then
+        echo "  [enable]  ${app}..."
+        docker exec --workdir /var/www/html -u www-data nextcloud php occ app:enable "$app" 2>&1 | grep -v "^$" || true
+      else
+        echo "  [install] ${app}..."
+        docker exec --workdir /var/www/html -u www-data nextcloud php occ app:install "$app" 2>&1 | grep -v "^$" || true
+      fi
+    done
+    success "NextCloud apps installed."
+  fi
 }
 
 # =============================================================================
