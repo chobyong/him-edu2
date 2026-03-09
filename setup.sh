@@ -437,6 +437,17 @@ print_summary() {
 # MAIN
 # =============================================================================
 require_root
+
+# Disable sleep/suspend — this is a server, never sleep
+info "Disabling sleep and suspend..."
+systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target 2>/dev/null || true
+# Also prevent blank/sleep via logind
+sed -i 's/^#*HandleLidSwitch=.*/HandleLidSwitch=ignore/' /etc/systemd/logind.conf 2>/dev/null || true
+sed -i 's/^#*HandleSuspendKey=.*/HandleSuspendKey=ignore/' /etc/systemd/logind.conf 2>/dev/null || true
+sed -i 's/^#*IdleAction=.*/IdleAction=ignore/' /etc/systemd/logind.conf 2>/dev/null || true
+systemctl restart systemd-logind 2>/dev/null || true
+success "Sleep and suspend disabled."
+
 clone_project
 install_packages
 detect_wifi_interface
