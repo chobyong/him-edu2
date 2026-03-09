@@ -18,6 +18,19 @@ on a Raspberry Pi 5 (or any Debian-based server).
 
 On the new server, run:
 ```bash
+sudo apt install curl
+sudo apt install git
+```
+Install Tailscale 
+```bash
+ curl -fsSL https://tailscale.com/install.sh | sudo sh
+
+tailscale up -ssh
+```
+
+Download from github to install rest
+
+```bash
 curl -O https://raw.githubusercontent.com/chobyong/him-edu2/main/setup.sh
 sudo bash setup.sh
 ```
