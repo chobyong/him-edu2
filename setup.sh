@@ -328,6 +328,9 @@ start_nextcloud() {
   done
   echo ""
 
+  # Fix config.php ownership — container may create it as root on first start
+  docker exec nextcloud chown www-data:www-data /var/www/html/config/config.php 2>/dev/null || true
+
   # First-time install check
   INSTALLED=$(docker exec -u www-data nextcloud php occ status 2>/dev/null | grep "installed: true" || true)
   if [[ -z "$INSTALLED" ]]; then
