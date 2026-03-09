@@ -307,6 +307,17 @@ start_nextcloud() {
   docker compose -f "$DOCKER_DIR/docker-compose.yml" pull --quiet
   docker compose -f "$DOCKER_DIR/docker-compose.yml" up -d
 
+  # Wait for NextCloud container to finish copying its files (occ must exist)
+  info "Waiting for NextCloud container to be ready..."
+  for i in $(seq 1 60); do
+    if docker exec --workdir / nextcloud test -f /var/www/html/occ 2>/dev/null; then
+      break
+    fi
+    echo -n "."
+    sleep 3
+  done
+  echo ""
+
   # Wait for MariaDB — ping passes early, so wait until the nextcloud DB is actually queryable
   info "Waiting for MariaDB to be fully ready..."
   for i in $(seq 1 60); do
