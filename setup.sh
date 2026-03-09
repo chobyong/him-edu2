@@ -347,16 +347,13 @@ start_nextcloud() {
 
     # Trusted domains
     local HOST_IP
-    HOST_IP=$(ip -4 addr show end0 2>/dev/null | awk '/inet / {print $2}' | cut -d/ -f1 | head -1 || echo "127.0.0.1")
+    HOST_IP=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '/src/ {print $7}' | head -1 || echo "127.0.0.1")
     docker exec -u www-data nextcloud php occ config:system:set trusted_domains 1 --value="${HOST_IP}:${NC_HTTP_PORT}"
     docker exec -u www-data nextcloud php occ config:system:set trusted_domains 2 --value="${AP_IP}:${NC_HTTP_PORT}"
     docker exec -u www-data nextcloud php occ config:system:set trusted_domains 3 --value="nextcloud.him-edu.local"
 
-    # Relax password policy for custom password
-    docker exec -u www-data nextcloud php occ config:app:set password_policy minLength --value=8
-    docker exec -u www-data nextcloud php occ config:app:set password_policy enforceNonCommonPassword --value=0
-
-    # Create configured admin user, remove default admin
+    # Create configured admin user (disable password_policy app to bypass breach-db check)
+    docker exec -u www-data nextcloud php occ app:disable password_policy 2>/dev/null || true
     docker exec nextcloud rm -rf "/var/www/html/data/${NC_ADMIN_USER}" 2>/dev/null || true
     docker exec -u www-data -e OC_PASS="$NC_ADMIN_PASS" nextcloud php occ user:add \
       --password-from-env \
@@ -364,6 +361,7 @@ start_nextcloud() {
       --group="admin" \
       "$NC_ADMIN_USER"
     docker exec -u www-data nextcloud php occ user:delete admin 2>/dev/null || true
+    docker exec -u www-data nextcloud php occ app:enable password_policy 2>/dev/null || true
 
     success "NextCloud installed. Login: $NC_ADMIN_USER / $NC_ADMIN_PASS"
   else
@@ -376,7 +374,7 @@ start_nextcloud() {
 # =============================================================================
 print_summary() {
   local HOST_IP
-  HOST_IP=$(ip -4 addr show end0 2>/dev/null | awk '/inet / {print $2}' | cut -d/ -f1 | head -1 || echo "unknown")
+  HOST_IP=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '/src/ {print $7}' | head -1 || echo "unknown")
   echo ""
   echo "============================================================"
   echo "  HimEdu Setup Complete"
