@@ -258,6 +258,7 @@ configure_walled_garden() {
   info "Configuring walled garden iptables..."
 
   echo 1 > /proc/sys/net/ipv4/ip_forward
+  touch /etc/sysctl.conf
   grep -q 'net.ipv4.ip_forward' /etc/sysctl.conf \
     && sed -i 's/.*net.ipv4.ip_forward.*/net.ipv4.ip_forward=1/' /etc/sysctl.conf \
     || echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.conf
@@ -341,10 +342,10 @@ start_nextcloud() {
   docker compose -f "$DOCKER_DIR/docker-compose.yml" pull --quiet
   docker compose -f "$DOCKER_DIR/docker-compose.yml" up -d
 
-  # Wait for MariaDB
+  # Wait for MariaDB (newer images use mariadb-admin, older use mysqladmin)
   info "Waiting for MariaDB..."
   for i in $(seq 1 30); do
-    if docker exec nextcloud-db mysqladmin ping -u nextcloud -p"${NC_DB_PASSWORD}" --silent 2>/dev/null; then
+    if docker exec nextcloud-db sh -c "mariadb-admin ping -u nextcloud -p'${NC_DB_PASSWORD}' --silent 2>/dev/null || mysqladmin ping -u nextcloud -p'${NC_DB_PASSWORD}' --silent 2>/dev/null"; then
       break
     fi
     echo -n "."
