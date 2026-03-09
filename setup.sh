@@ -247,8 +247,12 @@ configure_nm_ap() {
 address=/#/${AP_IP}
 EOF
 
-  nmcli con up "HimEdu-AP"
-  success "AP up — ${WLAN_IF} at ${AP_IP}/24, SSID: ${AP_SSID}."
+  if nmcli con up "HimEdu-AP" 2>&1; then
+    success "AP up — ${WLAN_IF} at ${AP_IP}/24, SSID: ${AP_SSID}."
+  else
+    echo "[WARN] AP connection created but could not activate now (driver/supplicant issue)."
+    echo "       Config is saved — it will retry on reboot, or run: sudo nmcli con up HimEdu-AP"
+  fi
 }
 
 # =============================================================================
