@@ -307,14 +307,14 @@ start_nextcloud() {
   docker compose -f "$DOCKER_DIR/docker-compose.yml" pull --quiet
   docker compose -f "$DOCKER_DIR/docker-compose.yml" up -d
 
-  # Wait for MariaDB (newer images use mariadb-admin, older use mysqladmin)
-  info "Waiting for MariaDB..."
-  for i in $(seq 1 30); do
-    if docker exec nextcloud-db sh -c "mariadb-admin ping -u nextcloud -p'${NC_DB_PASSWORD}' --silent 2>/dev/null || mysqladmin ping -u nextcloud -p'${NC_DB_PASSWORD}' --silent 2>/dev/null"; then
+  # Wait for MariaDB — ping passes early, so wait until the nextcloud DB is actually queryable
+  info "Waiting for MariaDB to be fully ready..."
+  for i in $(seq 1 60); do
+    if docker exec nextcloud-db sh -c "mariadb -u nextcloud -p'${NC_DB_PASSWORD}' nextcloud -e 'SELECT 1' 2>/dev/null | grep -q 1"; then
       break
     fi
     echo -n "."
-    sleep 2
+    sleep 3
   done
   echo ""
 
