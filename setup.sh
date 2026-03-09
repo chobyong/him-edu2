@@ -310,7 +310,7 @@ start_nextcloud() {
   # Wait for MariaDB — ping passes early, so wait until the nextcloud DB is actually queryable
   info "Waiting for MariaDB to be fully ready..."
   for i in $(seq 1 60); do
-    if docker exec nextcloud-db sh -c "mariadb -u nextcloud -p'${NC_DB_PASSWORD}' nextcloud -e 'SELECT 1' 2>/dev/null | grep -q 1"; then
+    if docker exec --workdir / nextcloud-db sh -c "mariadb -u nextcloud -p'${NC_DB_PASSWORD}' nextcloud -e 'SELECT 1' 2>/dev/null | grep -q 1"; then
       break
     fi
     echo -n "."
@@ -319,17 +319,17 @@ start_nextcloud() {
   echo ""
 
   # Fix config.php ownership — container may create it as root on first start
-  docker exec nextcloud chown www-data:www-data /var/www/html/config/config.php 2>/dev/null || true
+  docker exec --workdir / nextcloud chown www-data:www-data /var/www/html/config/config.php 2>/dev/null || true
 
   # First-time install check
-  INSTALLED=$(docker exec -u www-data nextcloud php occ status 2>/dev/null | grep "installed: true" || true)
+  INSTALLED=$(docker exec --workdir / -u www-data nextcloud php occ status 2>/dev/null | grep "installed: true" || true)
   if [[ -z "$INSTALLED" ]]; then
     info "Running NextCloud first-time install..."
     if [[ -f "$DOCKER_DIR/config/config.php" ]]; then
       sed -i "s/'installed' => true,/'installed' => false,/" "$DOCKER_DIR/config/config.php" || true
     fi
 
-    docker exec -u www-data nextcloud php occ maintenance:install \
+    docker exec --workdir / -u www-data nextcloud php occ maintenance:install \
       --database mysql \
       --database-host nextclouddb \
       --database-name nextcloud \
@@ -341,20 +341,20 @@ start_nextcloud() {
     # Trusted domains
     local HOST_IP
     HOST_IP=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '/src/ {print $7}' | head -1 || echo "127.0.0.1")
-    docker exec -u www-data nextcloud php occ config:system:set trusted_domains 1 --value="${HOST_IP}:${NC_HTTP_PORT}"
-    docker exec -u www-data nextcloud php occ config:system:set trusted_domains 2 --value="${AP_IP}:${NC_HTTP_PORT}"
-    docker exec -u www-data nextcloud php occ config:system:set trusted_domains 3 --value="nextcloud.him-edu.local"
+    docker exec --workdir / -u www-data nextcloud php occ config:system:set trusted_domains 1 --value="${HOST_IP}:${NC_HTTP_PORT}"
+    docker exec --workdir / -u www-data nextcloud php occ config:system:set trusted_domains 2 --value="${AP_IP}:${NC_HTTP_PORT}"
+    docker exec --workdir / -u www-data nextcloud php occ config:system:set trusted_domains 3 --value="nextcloud.him-edu.local"
 
     # Create configured admin user (disable password_policy app to bypass breach-db check)
-    docker exec -u www-data nextcloud php occ app:disable password_policy 2>/dev/null || true
-    docker exec nextcloud rm -rf "/var/www/html/data/${NC_ADMIN_USER}" 2>/dev/null || true
-    docker exec -u www-data -e OC_PASS="$NC_ADMIN_PASS" nextcloud php occ user:add \
+    docker exec --workdir / -u www-data nextcloud php occ app:disable password_policy 2>/dev/null || true
+    docker exec --workdir / nextcloud rm -rf "/var/www/html/data/${NC_ADMIN_USER}" 2>/dev/null || true
+    docker exec --workdir / -u www-data -e OC_PASS="$NC_ADMIN_PASS" nextcloud php occ user:add \
       --password-from-env \
       --display-name="$NC_ADMIN_USER" \
       --group="admin" \
       "$NC_ADMIN_USER"
-    docker exec -u www-data nextcloud php occ user:delete admin 2>/dev/null || true
-    docker exec -u www-data nextcloud php occ app:enable password_policy 2>/dev/null || true
+    docker exec --workdir / -u www-data nextcloud php occ user:delete admin 2>/dev/null || true
+    docker exec --workdir / -u www-data nextcloud php occ app:enable password_policy 2>/dev/null || true
 
     success "NextCloud installed. Login: $NC_ADMIN_USER / $NC_ADMIN_PASS"
   else
