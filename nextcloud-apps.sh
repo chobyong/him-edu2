@@ -35,6 +35,18 @@ if ! $OCC status &>/dev/null; then
   exit 1
 fi
 
+# Check internet access from inside the container
+HTTP_CODE=$(docker exec --workdir / "${NC_CONTAINER}" curl -s --max-time 10 -o /dev/null -w '%{http_code}' https://apps.nextcloud.com 2>/dev/null || echo "000")
+if [[ "$HTTP_CODE" != "200" ]]; then
+  err "No internet access from inside the NextCloud container (got: ${HTTP_CODE})."
+  echo ""
+  echo "Fix: restart Docker to restore its iptables forwarding rules, then re-run this script:"
+  echo "  sudo systemctl restart docker"
+  echo "  docker compose -f /opt/him-edu2/docker/nextcloud/docker-compose.yml up -d"
+  echo "  sudo bash $0"
+  exit 1
+fi
+
 echo ""
 echo "Installing NextCloud apps..."
 echo "-------------------------------------------"
