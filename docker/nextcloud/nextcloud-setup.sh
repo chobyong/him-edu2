@@ -14,8 +14,10 @@ fi
 
 # 0. Install Docker and Docker Compose
 echo "[0/5] Installing Docker and Docker Compose..."
-apt-get update -qq
-DEBIAN_FRONTEND=noninteractive apt-get install -y docker.io docker-compose-plugin
+if ! command -v docker &>/dev/null; then
+  apt-get install -y -qq curl
+  curl -fsSL https://get.docker.com | sh
+fi
 systemctl enable --now docker
 usermod -aG docker "$CURRENT_USER"
 echo "      Docker installed. '$CURRENT_USER' added to docker group (re-login to use without sudo)."

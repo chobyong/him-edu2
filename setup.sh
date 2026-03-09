@@ -68,6 +68,12 @@ clone_project() {
 # =============================================================================
 install_packages() {
   info "Installing system packages..."
+  # Install Docker via official script (handles repo setup for all Debian/RPi variants)
+  if ! command -v docker &>/dev/null; then
+    apt-get install -y -qq curl
+    curl -fsSL https://get.docker.com | sh
+  fi
+
   apt-get update -qq
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
     hostapd \
@@ -75,8 +81,6 @@ install_packages() {
     netfilter-persistent \
     python3-venv \
     python3-full \
-    docker.io \
-    docker-compose-plugin \
     iw
   systemctl unmask hostapd || true
 
