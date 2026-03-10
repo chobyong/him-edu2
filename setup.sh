@@ -102,6 +102,7 @@ install_packages() {
   apt-get update -qq
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
     hostapd \
+    network-manager \
     iptables-persistent \
     netfilter-persistent \
     python3-venv \

@@ -1,13 +1,17 @@
 #!/bin/bash
 # make-installer-usb.sh
-# Creates an unattended HimEdu Debian installer USB from an existing Debian ISO or USB.
+# Creates an unattended HimEdu Debian installer from an existing Debian ISO or USB.
 #
 # Usage:
-#   sudo bash make-installer-usb.sh <source> <target-usb>
+#   sudo bash make-installer-usb.sh <source> <target>
+#
+# <target> can be:
+#   /dev/sdX           — write bootable USB directly
+#   /path/to/out.iso   — save as ISO file (flash with Rufus, Etcher, dd, etc.)
 #
 # Examples:
-#   sudo bash make-installer-usb.sh /dev/sdb /dev/sdc   # source=USB, target=USB
-#   sudo bash make-installer-usb.sh debian.iso /dev/sdc  # source=ISO file, target=USB
+#   sudo bash make-installer-usb.sh debian.iso /dev/sdc
+#   sudo bash make-installer-usb.sh debian.iso /home/him/him-edu.iso
 #
 # The installer will:
 #   - Install Debian fully unattended (no keyboard input required)
@@ -30,7 +34,6 @@ REPO_URL="https://github.com/chobyong/him-edu2.git"
 
 WORK_DIR="/tmp/him-edu-installer"
 ISO_WORK="$WORK_DIR/iso"
-INITRD_WORK="$WORK_DIR/initrd"
 SOURCE_ISO="$WORK_DIR/source.iso"
 OUTPUT_ISO="$WORK_DIR/him-edu-installer.iso"
 
@@ -42,38 +45,59 @@ err()  { echo -e "${RED}[ERROR]${RESET} $*"; exit 1; }
 
 # ── Validate ──────────────────────────────────────────────────────────────────
 [[ -z "$SOURCE" || -z "$TARGET" ]] && {
-  echo "Usage: sudo bash make-installer-usb.sh <source-device-or-iso> <target-usb>"
+  echo "Usage: sudo bash make-installer-usb.sh <source> <target>"
   echo ""
-  echo "  source  — Debian installer USB device (e.g. /dev/sdb) or ISO file"
-  echo "  target  — USB device to write the new installer to (e.g. /dev/sdc)"
+  echo "  source  — Debian ISO file or USB device (e.g. /dev/sdb)"
+  echo "  target  — USB device (/dev/sdX) OR output ISO path (/path/to/out.iso)"
   echo ""
-  echo "Example (USB to USB):"
-  echo "  sudo bash make-installer-usb.sh /dev/sdb /dev/sdc"
+  echo "Examples:"
+  echo "  sudo bash make-installer-usb.sh debian.iso /dev/sdc"
+  echo "  sudo bash make-installer-usb.sh debian.iso /home/him/him-edu.iso"
   exit 1
 }
 
 [[ $EUID -ne 0 ]] && err "Run as root: sudo bash $0 $*"
 
-[[ ! -b "$TARGET" ]] && err "Target '$TARGET' is not a block device."
-[[ "$SOURCE" = "$TARGET" ]] && err "Source and target cannot be the same device."
+# Determine output mode: USB device or ISO file
+TARGET_IS_USB=false
+TARGET_IS_ISO=false
+if [[ -b "$TARGET" ]]; then
+  TARGET_IS_USB=true
+  [[ "$SOURCE" = "$TARGET" ]] && err "Source and target cannot be the same device."
+elif [[ "$TARGET" == *.iso ]]; then
+  TARGET_IS_ISO=true
+  TARGET_DIR="$(dirname "$TARGET")"
+  [[ -d "$TARGET_DIR" ]] || err "Output directory '$TARGET_DIR' does not exist."
+else
+  err "Target '$TARGET' is not a block device and does not end in .iso"
+fi
 
-for cmd in xorriso cpio gzip dd find awk; do
-  command -v "$cmd" &>/dev/null || err "Missing tool: $cmd  →  sudo apt install xorriso cpio gzip"
+for cmd in xorriso dd find awk; do
+  command -v "$cmd" &>/dev/null || err "Missing tool: $cmd  →  sudo apt install xorriso"
 done
 
 # ── Confirm ───────────────────────────────────────────────────────────────────
-TARGET_SIZE=$(lsblk -dno SIZE "$TARGET" 2>/dev/null || echo "unknown")
+if $TARGET_IS_USB; then
+  TARGET_SIZE=$(lsblk -dno SIZE "$TARGET" 2>/dev/null || echo "unknown")
+  TARGET_LABEL="$TARGET ($TARGET_SIZE) [USB]"
+else
+  TARGET_LABEL="$TARGET [ISO file]"
+fi
 echo ""
 echo "╔══════════════════════════════════════════════════════╗"
 echo "║      HimEdu Unattended Debian Installer Builder      ║"
 echo "╠══════════════════════════════════════════════════════╣"
 printf "║  Source  : %-41s║\n" "$SOURCE"
-printf "║  Target  : %-25s (%s)%-6s║\n" "$TARGET" "$TARGET_SIZE" ""
+printf "║  Output  : %-41s║\n" "$TARGET_LABEL"
 printf "║  Hostname: %-41s║\n" "$HOSTNAME"
 printf "║  User    : %-20s Password: %-10s║\n" "$USERNAME" "$USER_PASS"
 printf "║  Timezone: %-41s║\n" "$TIMEZONE"
 echo "╠══════════════════════════════════════════════════════╣"
-echo "║  ⚠  ALL DATA ON $TARGET WILL BE ERASED               ║"
+if $TARGET_IS_USB; then
+  echo "║  ⚠  ALL DATA ON $TARGET WILL BE ERASED               ║"
+else
+  echo "║  Output ISO will be saved to the path above.         ║"
+fi
 echo "╚══════════════════════════════════════════════════════╝"
 echo ""
 read -rp "Continue? [y/N] " confirm
@@ -81,7 +105,7 @@ read -rp "Continue? [y/N] " confirm
 
 # ── Setup work dir ────────────────────────────────────────────────────────────
 rm -rf "$WORK_DIR"
-mkdir -p "$ISO_WORK" "$INITRD_WORK"
+mkdir -p "$ISO_WORK"
 
 # ── Step 1: Get source ISO ────────────────────────────────────────────────────
 info "Step 1/7 — Preparing source ISO..."
@@ -104,7 +128,8 @@ ok "ISO extracted to $ISO_WORK"
 
 # ── Step 3: Create preseed.cfg ────────────────────────────────────────────────
 info "Step 3/7 — Writing preseed.cfg..."
-cat > "$WORK_DIR/preseed.cfg" << PRESEED
+# Written directly into ISO root so the installer can read it via file=/cdrom/preseed.cfg
+cat > "$ISO_WORK/preseed.cfg" << PRESEED
 ### HimEdu Unattended Debian Installer
 
 # Locale and keyboard
@@ -152,7 +177,7 @@ d-i passwd/user-password-again password ${USER_PASS}
 d-i passwd/user-default-groups string sudo audio video cdrom
 
 # Packages
-tasksel tasksel/first multiselect standard, ssh-server
+tasksel tasksel/first multiselect standard, ssh-server, kde-desktop
 d-i pkgsel/include string curl git sudo openssh-server
 d-i pkgsel/upgrade select full-upgrade
 popularity-contest popularity-contest/participate boolean false
@@ -174,58 +199,16 @@ d-i finish-install/reboot_in_progress note
 PRESEED
 ok "preseed.cfg written."
 
-# ── Step 4: Inject preseed into initrd ────────────────────────────────────────
-info "Step 4/7 — Injecting preseed into initrd..."
-INITRD_PATH=""
-for candidate in \
-  "$ISO_WORK/install.amd/initrd.gz" \
-  "$ISO_WORK/install/initrd.gz" \
-  "$ISO_WORK/install.x86_64/initrd.gz"; do
-  [[ -f "$candidate" ]] && { INITRD_PATH="$candidate"; break; }
-done
-[[ -z "$INITRD_PATH" ]] && err "Cannot find initrd in ISO. Searched: install.amd/, install/, install.x86_64/"
-echo "  initrd: $INITRD_PATH"
-
-# Debian initrd may have an early uncompressed cpio section (CPU microcode)
-# prepended before the gzip'd rootfs. Find the gzip start offset.
-GZIP_OFFSET=$(LANG=C grep -boa $'\x1f\x8b' "$INITRD_PATH" 2>/dev/null | head -1 | cut -d: -f1 | tr -d '[:space:]')
-GZIP_OFFSET="${GZIP_OFFSET:-0}"
-GZIP_OFFSET=$(printf '%s' "$GZIP_OFFSET" | tr -d '[:space:]')
-echo "  gzip offset: ${GZIP_OFFSET} bytes"
-
-# Split: save any early section, extract gzip portion
-if [[ "$GZIP_OFFSET" -gt 0 ]]; then
-  dd if="$INITRD_PATH" bs=1 count="$GZIP_OFFSET" of="$WORK_DIR/initrd_early.bin" 2>/dev/null
-  dd if="$INITRD_PATH" bs=1 skip="$GZIP_OFFSET" of="$WORK_DIR/initrd_main.gz" 2>/dev/null
-else
-  cp "$INITRD_PATH" "$WORK_DIR/initrd_main.gz"
-fi
-
-# Extract, add preseed, repack
-mkdir -p "$INITRD_WORK"
-cd "$INITRD_WORK"
-gzip -dc "$WORK_DIR/initrd_main.gz" | cpio -id --quiet 2>/dev/null || true
-cp "$WORK_DIR/preseed.cfg" "$INITRD_WORK/preseed.cfg"
-find . | cpio -H newc -o --quiet 2>/dev/null | gzip -9 > "$WORK_DIR/initrd_new.gz"
-cd /
-
-# Recombine early section + new gzip
-if [[ "$GZIP_OFFSET" -gt 0 ]]; then
-  cat "$WORK_DIR/initrd_early.bin" "$WORK_DIR/initrd_new.gz" > "$INITRD_PATH"
-else
-  cp "$WORK_DIR/initrd_new.gz" "$INITRD_PATH"
-fi
-
-# Verify
-if zcat "$INITRD_PATH" 2>/dev/null | cpio -t 2>/dev/null | grep -q "preseed.cfg"; then
-  ok "preseed.cfg verified inside initrd."
-else
-  err "preseed.cfg NOT found in rebuilt initrd — injection failed."
-fi
+# ── Step 4: Place preseed in ISO root ─────────────────────────────────────────
+info "Step 4/7 — Placing preseed.cfg in ISO root..."
+# preseed.cfg is already written to $ISO_WORK/preseed.cfg in Step 3.
+# The installer loads it via file=/cdrom/preseed.cfg (Debian mounts install media at /cdrom).
+[[ -f "$ISO_WORK/preseed.cfg" ]] || err "preseed.cfg missing from ISO work dir."
+ok "preseed.cfg placed at ISO root."
 
 # ── Step 5: Patch boot configs ────────────────────────────────────────────────
 info "Step 5/7 — Patching boot configuration..."
-PRESEED_PARAMS="auto=true priority=critical preseed/file=/preseed.cfg"
+PRESEED_PARAMS="auto=true priority=critical file=/cdrom/preseed.cfg"
 
 # Patch GRUB (EFI)
 for cfg in \
@@ -274,25 +257,37 @@ xorriso -as mkisofs \
 
 ok "ISO repacked: $OUTPUT_ISO ($(du -sh "$OUTPUT_ISO" | cut -f1))"
 
-# ── Step 7: Write to USB ──────────────────────────────────────────────────────
-info "Step 7/7 — Writing to $TARGET..."
-# Unmount any partitions on target
-for part in "${TARGET}"?*; do
-  umount "$part" 2>/dev/null || true
-done
-dd if="$OUTPUT_ISO" of="$TARGET" bs=4M status=progress conv=fsync 2>&1
-sync
+# ── Step 7: Deliver output ────────────────────────────────────────────────────
+if $TARGET_IS_USB; then
+  info "Step 7/7 — Writing to USB $TARGET..."
+  for part in "${TARGET}"?*; do
+    umount "$part" 2>/dev/null || true
+  done
+  dd if="$OUTPUT_ISO" of="$TARGET" bs=4M status=progress conv=fsync 2>&1
+  sync
+  FINAL_MSG="USB written to $TARGET — ready to boot."
+else
+  info "Step 7/7 — Saving ISO to $TARGET..."
+  cp "$OUTPUT_ISO" "$TARGET"
+  FINAL_MSG="ISO saved: $TARGET  ($(du -sh "$TARGET" | cut -f1))"
+fi
 
 echo ""
 echo "╔══════════════════════════════════════════════════════╗"
-echo "║              Installer USB Ready!                    ║"
+echo "║              HimEdu Installer Ready!                 ║"
 echo "╠══════════════════════════════════════════════════════╣"
-echo "║  1. Plug this USB into the target computer           ║"
-echo "║  2. Boot from USB (F12 / F2 / Del for boot menu)    ║"
+if $TARGET_IS_ISO; then
+  printf "║  ISO: %-46s║\n" "$TARGET"
+  echo "║  Flash with: Rufus, Etcher, or:                      ║"
+  printf "║    dd if=%s of=/dev/sdX bs=4M status=progress ║\n" "$(basename "$TARGET")"
+else
+  echo "║  1. Plug this USB into the target computer           ║"
+  echo "║  2. Boot from USB (F12 / F2 / Del for boot menu)    ║"
+fi
 echo "║  3. Installer runs fully automatically               ║"
 echo "║  4. Server reboots → setup.sh runs on first boot     ║"
 echo "╠══════════════════════════════════════════════════════╣"
 printf "║  Login after setup: %-32s║\n" "${USERNAME} / ${USER_PASS}"
-printf "║  Tailscale: run 'sudo tailscale up --ssh' after   ║\n"
+echo "║  Tailscale: run 'sudo tailscale up --ssh' after      ║"
 echo "╚══════════════════════════════════════════════════════╝"
 echo ""
