@@ -22,6 +22,7 @@ NC_HTTPS_PORT=8443
 NC_DB_PASSWORD="dbpassword"
 NC_ADMIN_USER="him"
 NC_ADMIN_PASS="ABCD_1234"
+NC_USER_PASS="User@1234"   # Password for generic users user1–user5
 
 KOLIBRI_PORT=8080
 KOLIBRI_USER="${SUDO_USER:-him}"
@@ -371,6 +372,21 @@ start_nextcloud() {
       --group="admin" \
       "$NC_ADMIN_USER"
     docker exec --workdir /var/www/html -u www-data nextcloud php occ user:delete admin 2>/dev/null || true
+    docker exec --workdir /var/www/html -u www-data nextcloud php occ app:enable password_policy 2>/dev/null || true
+
+    # Create generic user accounts user1–user5
+    docker exec --workdir /var/www/html -u www-data nextcloud php occ app:disable password_policy 2>/dev/null || true
+    for i in 1 2 3 4 5; do
+      local uname="user${i}"
+      if docker exec --workdir /var/www/html -u www-data nextcloud php occ user:list 2>/dev/null | grep -q "${uname}"; then
+        echo "  [skip] ${uname} already exists"
+      else
+        docker exec --workdir /var/www/html -u www-data -e OC_PASS="$NC_USER_PASS" nextcloud php occ user:add \
+          --password-from-env \
+          --display-name="User ${i}" \
+          "$uname"
+      fi
+    done
     docker exec --workdir /var/www/html -u www-data nextcloud php occ app:enable password_policy 2>/dev/null || true
 
     success "NextCloud installed. Login: $NC_ADMIN_USER / $NC_ADMIN_PASS"
