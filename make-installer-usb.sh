@@ -54,22 +54,6 @@ err()  { echo -e "${RED}[ERROR]${RESET} $*"; exit 1; }
 
 [[ $EUID -ne 0 ]] && err "Run as root: sudo bash $0 $*"
 
-# ── Interactive prompts ───────────────────────────────────────────────────────
-echo ""
-echo "Configure the installer (press Enter to keep default):"
-echo ""
-read -rp "  Hostname  [${HOSTNAME}]: " input
-[[ -n "$input" ]] && HOSTNAME="$input"
-
-read -rp "  Username  [${USERNAME}]: " input
-[[ -n "$input" ]] && USERNAME="$input"
-
-read -rp "  Password  [${USER_PASS}]: " input
-[[ -n "$input" ]] && USER_PASS="$input"
-
-read -rp "  Timezone  [${TIMEZONE}]: " input
-[[ -n "$input" ]] && TIMEZONE="$input"
-# ─────────────────────────────────────────────────────────────────────────────
 [[ ! -b "$TARGET" ]] && err "Target '$TARGET' is not a block device."
 [[ "$SOURCE" = "$TARGET" ]] && err "Source and target cannot be the same device."
 
@@ -130,7 +114,8 @@ d-i keyboard-configuration/toggle select No toggling
 
 # Network — DHCP on wired, set hostname
 d-i netcfg/choose_interface select auto
-d-i netcfg/get_hostname string ${HOSTNAME}
+# Hostname — installer will prompt for this during network setup
+# d-i netcfg/get_hostname string him-edu
 d-i netcfg/get_domain string local
 d-i netcfg/wireless_wep string
 
