@@ -188,8 +188,9 @@ echo "  initrd: $INITRD_PATH"
 
 # Debian initrd may have an early uncompressed cpio section (CPU microcode)
 # prepended before the gzip'd rootfs. Find the gzip start offset.
-GZIP_OFFSET=$(LANG=C grep -boa $'\x1f\x8b' "$INITRD_PATH" | head -1 | cut -d: -f1 || echo "0")
+GZIP_OFFSET=$(LANG=C grep -boa $'\x1f\x8b' "$INITRD_PATH" 2>/dev/null | head -1 | cut -d: -f1 | tr -d '[:space:]')
 GZIP_OFFSET="${GZIP_OFFSET:-0}"
+GZIP_OFFSET=$(printf '%s' "$GZIP_OFFSET" | tr -d '[:space:]')
 echo "  gzip offset: ${GZIP_OFFSET} bytes"
 
 # Split: save any early section, extract gzip portion
