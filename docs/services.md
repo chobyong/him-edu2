@@ -32,19 +32,23 @@ All HTTP traffic from WiFi clients is redirected to the landing page. DNS resolv
 | Service | Username | Password |
 |---|---|---|
 | Kolibri | set via setup wizard on first visit | — |
-| NextCloud | `him` | `ABCD_1234` |
+| NextCloud (admin) | `him` | `ABCD_1234` |
+| NextCloud (users) | `user1` – `user5` | `User@1234` |
 | NPM (first login) | `admin@example.com` | `changeme` |
 
 ## Directory Structure
 
 ```
-/home/him/
-└── setup.sh              <- setup script (download from GitHub)
-
 /opt/him-edu2/
+├── setup.sh              <- main setup script
+├── reset.sh              <- revert server to initial state
+├── nextcloud-apps.sh     <- install NextCloud apps on running server
+├── nextcloud-users.sh    <- create user1–user5 on running server
+├── kolibri-channels.sh   <- download Kolibri channels from internet
+├── kolibri-sync.sh       <- copy Kolibri content from master server
+├── docs/                 <- this documentation
 ├── apps/
 │   └── landing/www/      <- landing page (index.html, styles.css)
-├── docs/                 <- this documentation
 └── docker/nextcloud/
     ├── docker-compose.yml
     ├── config/           <- NextCloud config (auto-generated)

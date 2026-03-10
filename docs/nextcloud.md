@@ -10,6 +10,54 @@ NextCloud runs as a Docker stack managed by `docker-compose.yml`.
 
 ---
 
+## Apps
+
+The following apps are installed automatically during setup:
+
+| App | ID | Description |
+|---|---|---|
+| Notes | `notes` | Personal notes |
+| NextCloud Office | `richdocuments` | Document editing via Collabora |
+| Calendar | `calendar` | Calendar and events |
+| Contacts | `contacts` | Address book |
+| Whiteboard | `whiteboard` | Collaborative whiteboard |
+| Mail | `mail` | Email client |
+| Forms | `forms` | Surveys and forms |
+
+To install apps on an already-running server:
+```bash
+sudo bash /opt/him-edu2/nextcloud-apps.sh
+```
+
+If the script reports no internet access from the container:
+```bash
+sudo systemctl restart docker
+docker compose -f /opt/him-edu2/docker/nextcloud/docker-compose.yml up -d
+sudo bash /opt/him-edu2/nextcloud-apps.sh
+```
+
+---
+
+## User Accounts
+
+Setup creates one admin and five generic user accounts:
+
+| Username | Password | Role |
+|---|---|---|
+| `him` | `ABCD_1234` | Admin |
+| `user1` – `user5` | `User@1234` | Regular user |
+
+Generic users have standard access only — they cannot install apps or manage settings.
+
+To create user accounts on an already-running server:
+```bash
+sudo bash /opt/him-edu2/nextcloud-users.sh
+```
+
+To change the default password for generic users, edit `NC_USER_PASS` at the top of `setup.sh` or `nextcloud-users.sh` before running.
+
+---
+
 ## Troubleshooting
 
 **Internal Server Error (500) on first visit:**
