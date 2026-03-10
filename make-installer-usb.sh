@@ -184,14 +184,43 @@ for candidate in \
   [[ -f "$candidate" ]] && { INITRD_PATH="$candidate"; break; }
 done
 [[ -z "$INITRD_PATH" ]] && err "Cannot find initrd in ISO. Searched: install.amd/, install/, install.x86_64/"
-
 echo "  initrd: $INITRD_PATH"
+
+# Debian initrd may have an early uncompressed cpio section (CPU microcode)
+# prepended before the gzip'd rootfs. Find the gzip start offset.
+GZIP_OFFSET=$(LANG=C grep -boa $'\x1f\x8b' "$INITRD_PATH" | head -1 | cut -d: -f1 || echo "0")
+GZIP_OFFSET="${GZIP_OFFSET:-0}"
+echo "  gzip offset: ${GZIP_OFFSET} bytes"
+
+# Split: save any early section, extract gzip portion
+if [[ "$GZIP_OFFSET" -gt 0 ]]; then
+  dd if="$INITRD_PATH" bs=1 count="$GZIP_OFFSET" of="$WORK_DIR/initrd_early.bin" 2>/dev/null
+  dd if="$INITRD_PATH" bs=1 skip="$GZIP_OFFSET" of="$WORK_DIR/initrd_main.gz" 2>/dev/null
+else
+  cp "$INITRD_PATH" "$WORK_DIR/initrd_main.gz"
+fi
+
+# Extract, add preseed, repack
+mkdir -p "$INITRD_WORK"
 cd "$INITRD_WORK"
-gzip -dc "$INITRD_PATH" | cpio -id --quiet 2>/dev/null || true
+gzip -dc "$WORK_DIR/initrd_main.gz" | cpio -id --quiet 2>/dev/null || true
 cp "$WORK_DIR/preseed.cfg" "$INITRD_WORK/preseed.cfg"
-find . | cpio -H newc -o --quiet 2>/dev/null | gzip -9 > "$INITRD_PATH"
+find . | cpio -H newc -o --quiet 2>/dev/null | gzip -9 > "$WORK_DIR/initrd_new.gz"
 cd /
-ok "preseed.cfg injected into initrd."
+
+# Recombine early section + new gzip
+if [[ "$GZIP_OFFSET" -gt 0 ]]; then
+  cat "$WORK_DIR/initrd_early.bin" "$WORK_DIR/initrd_new.gz" > "$INITRD_PATH"
+else
+  cp "$WORK_DIR/initrd_new.gz" "$INITRD_PATH"
+fi
+
+# Verify
+if zcat "$INITRD_PATH" 2>/dev/null | cpio -t 2>/dev/null | grep -q "preseed.cfg"; then
+  ok "preseed.cfg verified inside initrd."
+else
+  err "preseed.cfg NOT found in rebuilt initrd — injection failed."
+fi
 
 # ── Step 5: Patch boot configs ────────────────────────────────────────────────
 info "Step 5/7 — Patching boot configuration..."
