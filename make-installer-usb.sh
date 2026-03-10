@@ -53,6 +53,23 @@ err()  { echo -e "${RED}[ERROR]${RESET} $*"; exit 1; }
 }
 
 [[ $EUID -ne 0 ]] && err "Run as root: sudo bash $0 $*"
+
+# ── Interactive prompts ───────────────────────────────────────────────────────
+echo ""
+echo "Configure the installer (press Enter to keep default):"
+echo ""
+read -rp "  Hostname  [${HOSTNAME}]: " input
+[[ -n "$input" ]] && HOSTNAME="$input"
+
+read -rp "  Username  [${USERNAME}]: " input
+[[ -n "$input" ]] && USERNAME="$input"
+
+read -rp "  Password  [${USER_PASS}]: " input
+[[ -n "$input" ]] && USER_PASS="$input"
+
+read -rp "  Timezone  [${TIMEZONE}]: " input
+[[ -n "$input" ]] && TIMEZONE="$input"
+# ─────────────────────────────────────────────────────────────────────────────
 [[ ! -b "$TARGET" ]] && err "Target '$TARGET' is not a block device."
 [[ "$SOURCE" = "$TARGET" ]] && err "Source and target cannot be the same device."
 
