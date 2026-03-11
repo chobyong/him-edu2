@@ -177,7 +177,7 @@ d-i passwd/user-password-again password ${USER_PASS}
 d-i passwd/user-default-groups string sudo audio video cdrom
 
 # Packages
-tasksel tasksel/first multiselect standard, ssh-server, kde-desktop
+tasksel tasksel/first multiselect standard, ssh-server, gnome-desktop
 d-i pkgsel/include string curl git sudo openssh-server
 d-i pkgsel/upgrade select full-upgrade
 popularity-contest popularity-contest/participate boolean false
