@@ -423,6 +423,8 @@ start_nextcloud() {
     docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice DocumentServerInternalUrl --value="http://onlyoffice/" 2>/dev/null || true
     docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice StorageUrl                --value="http://nextcloud/" 2>/dev/null || true
     docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice verify_peer_off           --value="true" 2>/dev/null || true
+    docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice defFormats  --value='{"docx":true,"xlsx":true,"pptx":true,"odt":true,"ods":true,"odp":true}' 2>/dev/null || true
+    docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice editFormats --value='{"csv":true,"doc":true,"docx":true,"xls":true,"xlsx":true,"ppt":true,"pptx":true,"odt":true,"ods":true,"odp":true}' 2>/dev/null || true
     success "NextCloud apps installed."
   fi
 }
