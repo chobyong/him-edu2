@@ -359,12 +359,27 @@ start_nextcloud() {
       --admin-user admin \
       --admin-pass "TempSetup_9x!"
 
-    # Trusted domains
-    local HOST_IP
-    HOST_IP=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '/src/ {print $7}' | head -1 || echo "127.0.0.1")
-    docker exec --workdir /var/www/html -u www-data nextcloud php occ config:system:set trusted_domains 1 --value="${HOST_IP}:${NC_HTTP_PORT}"
-    docker exec --workdir /var/www/html -u www-data nextcloud php occ config:system:set trusted_domains 2 --value="${AP_IP}:${NC_HTTP_PORT}"
-    docker exec --workdir /var/www/html -u www-data nextcloud php occ config:system:set trusted_domains 3 --value="nextcloud.him-edu.local"
+    # Trusted domains — add all interface IPs (wired + wireless) with and without port
+    local idx=0
+    local OCC_TD="docker exec --workdir /var/www/html -u www-data nextcloud php occ config:system:set trusted_domains"
+
+    # Always trust localhost and AP IP
+    for domain in \
+      "localhost" \
+      "127.0.0.1" \
+      "${AP_IP}" \
+      "${AP_IP}:${NC_HTTP_PORT}" \
+      "${AP_IP}:${NC_HTTPS_PORT}" \
+      "nextcloud.him-edu.local"; do
+      $OCC_TD $((++idx)) --value="$domain"
+    done
+
+    # Trust all current interface IPv4 addresses (wired + any others)
+    while IFS= read -r iface_ip; do
+      [[ -z "$iface_ip" ]] && continue
+      $OCC_TD $((++idx)) --value="$iface_ip"
+      $OCC_TD $((++idx)) --value="${iface_ip}:${NC_HTTP_PORT}"
+    done < <(ip -4 addr show | awk '/inet / {print $2}' | cut -d/ -f1 | grep -v '^127\.' || true)
 
     # Create configured admin user (disable password_policy app to bypass breach-db check)
     docker exec --workdir /var/www/html -u www-data nextcloud php occ app:disable password_policy 2>/dev/null || true
