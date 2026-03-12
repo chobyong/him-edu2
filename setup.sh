@@ -441,7 +441,8 @@ start_nextcloud() {
     #   because mDNS/Docker hostnames don't resolve inside Docker containers reliably
     local OO_BROWSER_HOST="${HOSTNAME}.local"
     local OO_HOST_IP
-    OO_HOST_IP=$(ip -4 addr show eth0 2>/dev/null | awk '/inet /{print $2}' | cut -d/ -f1 | head -1)
+    OO_HOST_IP=$(ip route get 1.1.1.1 2>/dev/null | awk '/src/{print $7}' | head -1)
+    [[ -z "$OO_HOST_IP" ]] && OO_HOST_IP=$(ip -4 addr show | awk '/inet / && !/127\./ && !/10\.42\./{print $2}' | cut -d/ -f1 | head -1)
     OO_HOST_IP="${OO_HOST_IP:-10.42.0.1}"
     echo "  [config]  onlyoffice document server (browser: ${OO_BROWSER_HOST}:9980, internal: ${OO_HOST_IP}:9980)..."
     docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice DocumentServerUrl         --value="http://${OO_BROWSER_HOST}:9980/" 2>/dev/null || true
