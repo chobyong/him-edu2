@@ -492,6 +492,16 @@ print_summary() {
 # =============================================================================
 require_root
 
+# Set hostname to him-edu so him-edu.local resolves via mDNS/Avahi
+DESIRED_HOSTNAME="him-edu"
+if [[ "$(hostname)" != "$DESIRED_HOSTNAME" ]]; then
+  info "Setting hostname to ${DESIRED_HOSTNAME}..."
+  hostnamectl set-hostname "$DESIRED_HOSTNAME"
+  # Update /etc/hosts if needed
+  sed -i "s/^127\.0\.1\.1.*/127.0.1.1\t${DESIRED_HOSTNAME}/" /etc/hosts 2>/dev/null || true
+  success "Hostname set to ${DESIRED_HOSTNAME} (mDNS: ${DESIRED_HOSTNAME}.local)"
+fi
+
 # Disable sleep/suspend — this is a server, never sleep
 info "Disabling sleep and suspend..."
 systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target 2>/dev/null || true
