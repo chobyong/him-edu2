@@ -6,21 +6,30 @@ set -e
 
 OCC="php /var/www/html/occ"
 
-# him-edu.local resolves via:
+# DocumentServerUrl: browser-facing — him-edu.local resolves via:
 #   - Avahi mDNS for wired clients (resolves to wired IP)
 #   - Captive DNS for WiFi clients (all DNS → 10.42.0.1)
-# Both reach OnlyOffice since Docker binds 9980 on 0.0.0.0
+# DocumentServerInternalUrl: NextCloud PHP → OnlyOffice using host eth0 IP
+#   (him-edu.local doesn't resolve inside Docker containers)
+# StorageUrl: OnlyOffice callbacks to NextCloud using host eth0 IP
+HOST_IP=$(ip route get 1.1.1.1 2>/dev/null | awk '/src/{print $7}' | head -1)
+HOST_IP="${HOST_IP:-10.42.0.1}"
+
 ONLYOFFICE_BROWSER_URL="http://him-edu.local:9980/"
-ONLYOFFICE_INTERNAL_URL="http://onlyoffice/"
-NEXTCLOUD_INTERNAL_URL="http://nextcloud/"
+ONLYOFFICE_INTERNAL_URL="http://${HOST_IP}:9980/"
+NEXTCLOUD_STORAGE_URL="http://${HOST_IP}:8081/"
 
 echo "[office-init] Installing OnlyOffice connector app..."
 $OCC app:install onlyoffice || $OCC app:enable onlyoffice
 
 echo "[office-init] Configuring OnlyOffice Document Server connection..."
+echo "[office-init]   Browser URL:  ${ONLYOFFICE_BROWSER_URL}"
+echo "[office-init]   Internal URL: ${ONLYOFFICE_INTERNAL_URL}"
+echo "[office-init]   Storage URL:  ${NEXTCLOUD_STORAGE_URL}"
+
 $OCC config:app:set onlyoffice DocumentServerUrl         --value="$ONLYOFFICE_BROWSER_URL"
 $OCC config:app:set onlyoffice DocumentServerInternalUrl --value="$ONLYOFFICE_INTERNAL_URL"
-$OCC config:app:set onlyoffice StorageUrl                --value="$NEXTCLOUD_INTERNAL_URL"
+$OCC config:app:set onlyoffice StorageUrl                --value="$NEXTCLOUD_STORAGE_URL"
 $OCC config:app:set onlyoffice verify_peer_off           --value="true"
 
 echo "[office-init] Enabling document creation formats..."

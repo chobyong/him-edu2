@@ -436,14 +436,17 @@ start_nextcloud() {
       fi
     done
     # Configure OnlyOffice Document Server connection
-    # Use mDNS hostname (him-edu.local) so both wired and WiFi clients can reach it:
-    #   - WiFi clients: captive DNS resolves all hostnames to 10.42.0.1 → hits AP interface
-    #   - Wired clients: Avahi mDNS resolves him-edu.local to the wired IP
-    local OO_HOSTNAME="${HOSTNAME}.local"
-    echo "  [config]  onlyoffice document server (${OO_HOSTNAME}:9980)..."
-    docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice DocumentServerUrl         --value="http://${OO_HOSTNAME}:9980/" 2>/dev/null || true
-    docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice DocumentServerInternalUrl --value="http://onlyoffice/" 2>/dev/null || true
-    docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice StorageUrl                --value="http://nextcloud/" 2>/dev/null || true
+    # DocumentServerUrl: browser-facing — him-edu.local resolves via mDNS (wired) or captive DNS (WiFi)
+    # DocumentServerInternalUrl + StorageUrl: container-to-host — must use real eth0 IP,
+    #   because mDNS/Docker hostnames don't resolve inside Docker containers reliably
+    local OO_BROWSER_HOST="${HOSTNAME}.local"
+    local OO_HOST_IP
+    OO_HOST_IP=$(ip -4 addr show eth0 2>/dev/null | awk '/inet /{print $2}' | cut -d/ -f1 | head -1)
+    OO_HOST_IP="${OO_HOST_IP:-10.42.0.1}"
+    echo "  [config]  onlyoffice document server (browser: ${OO_BROWSER_HOST}:9980, internal: ${OO_HOST_IP}:9980)..."
+    docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice DocumentServerUrl         --value="http://${OO_BROWSER_HOST}:9980/" 2>/dev/null || true
+    docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice DocumentServerInternalUrl --value="http://${OO_HOST_IP}:9980/" 2>/dev/null || true
+    docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice StorageUrl                --value="http://${OO_HOST_IP}:8081/" 2>/dev/null || true
     docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice verify_peer_off           --value="true" 2>/dev/null || true
     docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice defFormats  --value='{"docx":true,"xlsx":true,"pptx":true,"odt":true,"ods":true,"odp":true}' 2>/dev/null || true
     docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice editFormats --value='{"csv":true,"doc":true,"docx":true,"xls":true,"xlsx":true,"ppt":true,"pptx":true,"odt":true,"ods":true,"odp":true}' 2>/dev/null || true
