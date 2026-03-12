@@ -78,14 +78,16 @@ detect_wifi_interface() {
 # 0. CLONE PROJECT FROM GITHUB
 # =============================================================================
 clone_project() {
-  if [[ -f "$DOCKER_DIR/docker-compose.yml" ]]; then
-    success "Project already at $PROJECT_DIR, skipping clone."
-    return
-  fi
-  info "Cloning project from GitHub..."
   apt-get install -y -qq git
-  git clone "$GITHUB_REPO" "$PROJECT_DIR"
-  success "Project cloned to $PROJECT_DIR."
+  if [[ -d "$PROJECT_DIR/.git" ]]; then
+    info "Updating project from GitHub..."
+    git -C "$PROJECT_DIR" pull --ff-only || true
+    success "Project updated."
+  else
+    info "Cloning project from GitHub..."
+    git clone "$GITHUB_REPO" "$PROJECT_DIR"
+    success "Project cloned to $PROJECT_DIR."
+  fi
 }
 
 # =============================================================================
