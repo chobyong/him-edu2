@@ -189,9 +189,12 @@ d-i grub-installer/bootdev string default
 # Post-install: clone repo, create first-boot service
 d-i preseed/late_command string \\
   in-target apt-get install -y curl git; \\
+  in-target sh -c 'curl -fsSL https://get.docker.com | sh'; \\
+  in-target usermod -aG docker ${USERNAME}; \\
   in-target git clone ${REPO_URL} /opt/him-edu2; \\
   in-target chown -R ${USERNAME}:${USERNAME} /opt/him-edu2; \\
   printf '[Unit]\nDescription=HimEdu first-boot setup\nAfter=network-online.target\nWants=network-online.target\nConditionPathExists=/opt/him-edu2/setup.sh\n\n[Service]\nType=oneshot\nExecStart=/bin/bash /opt/him-edu2/setup.sh\nStandardOutput=journal+console\nStandardError=journal+console\nRemainAfterExit=yes\n\n[Install]\nWantedBy=multi-user.target\n' > /target/etc/systemd/system/him-edu-setup.service; \\
+  in-target systemctl enable docker; \\
   in-target systemctl enable him-edu-setup.service
 
 # Done
