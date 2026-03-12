@@ -303,7 +303,23 @@ start_nextcloud() {
     "$DOCKER_DIR/nextclouddb" \
     "$DOCKER_DIR/npm-data" \
     "$DOCKER_DIR/letsencrypt" \
-    "$DOCKER_DIR/redis"
+    "$DOCKER_DIR/redis" \
+    "$DOCKER_DIR/cryptpad/data" \
+    "$DOCKER_DIR/cryptpad/blob" \
+    "$DOCKER_DIR/cryptpad/block" \
+    "$DOCKER_DIR/cryptpad/customize" \
+    "$DOCKER_DIR/cryptpad/logs"
+
+  # Generate .env for docker-compose with host IP (used by CryptPad)
+  local CPAD_IP
+  CPAD_IP=$(ip route get 1.1.1.1 2>/dev/null | awk '/src/{print $7}' | head -1)
+  [[ -z "$CPAD_IP" ]] && CPAD_IP=$(ip -4 addr show | awk '/inet / && !/127\./ && !/10\.42\./{print $2}' | cut -d/ -f1 | head -1)
+  CPAD_IP="${CPAD_IP:-10.42.0.1}"
+  cat > "$DOCKER_DIR/.env" << ENVEOF
+CPAD_MAIN_DOMAIN=http://${CPAD_IP}:3000
+CPAD_SANDBOX_DOMAIN=http://${CPAD_IP}:3001
+ENVEOF
+  echo "  [config]  CryptPad domains: http://${CPAD_IP}:3000"
 
   # Set ownership for Docker container users
   # NextCloud (www-data = uid 33): html, custom_apps, config, data
@@ -473,11 +489,13 @@ print_summary() {
   echo "  Services (wired: $HOST_IP)"
   echo "    Kolibri   : http://$HOST_IP:$KOLIBRI_PORT"
   echo "    NextCloud : http://$HOST_IP:$NC_HTTP_PORT"
+  echo "    CryptPad  : http://$HOST_IP:3000"
   echo "    NPM Admin : http://$HOST_IP:81"
   echo ""
   echo "  Services (WiFi: $AP_IP)"
   echo "    Kolibri   : http://$AP_IP:$KOLIBRI_PORT"
   echo "    NextCloud : http://$AP_IP:$NC_HTTP_PORT"
+  echo "    CryptPad  : http://$AP_IP:3000"
   echo "    Landing   : http://$AP_IP (captive portal)"
   echo ""
   echo "  Logins"
