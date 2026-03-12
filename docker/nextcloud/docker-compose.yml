@@ -54,6 +54,17 @@ services:
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
 
+  onlyoffice:
+    image: onlyoffice/documentserver
+    container_name: onlyoffice
+    restart: unless-stopped
+    networks:
+      - cloud
+    environment:
+      - JWT_ENABLED=false
+    ports:
+      - 9980:80
+
   redis:
     image: redis:alpine
     container_name: redis
