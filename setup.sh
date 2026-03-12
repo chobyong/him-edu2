@@ -405,7 +405,7 @@ start_nextcloud() {
     echo "[WARN] No internet access from inside NextCloud container — skipping app install."
     echo "       To install apps later, fix Docker networking and run: sudo bash /opt/him-edu2/nextcloud-apps.sh"
   else
-    local NC_APPS=(notes richdocuments calendar contacts whiteboard mail forms)
+    local NC_APPS=(notes onlyoffice calendar contacts whiteboard mail forms)
     for app in "${NC_APPS[@]}"; do
       if docker exec --workdir /var/www/html -u www-data nextcloud php occ app:list 2>/dev/null | grep -q "^  - ${app}:"; then
         echo "  [skip]    ${app} already enabled"
@@ -417,6 +417,12 @@ start_nextcloud() {
         docker exec --workdir /var/www/html -u www-data nextcloud php occ app:install "$app" 2>&1 | grep -v "^$" || true
       fi
     done
+    # Configure OnlyOffice Document Server connection
+    echo "  [config]  onlyoffice document server..."
+    docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice DocumentServerUrl         --value="http://10.42.0.1:9980/" 2>/dev/null || true
+    docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice DocumentServerInternalUrl --value="http://onlyoffice/" 2>/dev/null || true
+    docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice StorageUrl                --value="http://nextcloud/" 2>/dev/null || true
+    docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice verify_peer_off           --value="true" 2>/dev/null || true
     success "NextCloud apps installed."
   fi
 }
