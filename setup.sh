@@ -109,8 +109,11 @@ install_packages() {
     netfilter-persistent \
     python3-venv \
     python3-full \
-    iw
+    iw \
+    avahi-daemon \
+    libnss-mdns
   systemctl unmask hostapd || true
+  systemctl enable --now avahi-daemon || true
 
   # Enable Docker service
   systemctl enable --now docker
@@ -433,11 +436,12 @@ start_nextcloud() {
       fi
     done
     # Configure OnlyOffice Document Server connection
-    # Use wired IP so browsers on both wired and WiFi networks can reach it
-    local OO_HOST_IP
-    OO_HOST_IP=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '/src/ {print $7}' | head -1 || echo "${AP_IP}")
-    echo "  [config]  onlyoffice document server (${OO_HOST_IP}:9980)..."
-    docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice DocumentServerUrl         --value="http://${OO_HOST_IP}:9980/" 2>/dev/null || true
+    # Use mDNS hostname (him-edu.local) so both wired and WiFi clients can reach it:
+    #   - WiFi clients: captive DNS resolves all hostnames to 10.42.0.1 → hits AP interface
+    #   - Wired clients: Avahi mDNS resolves him-edu.local to the wired IP
+    local OO_HOSTNAME="${HOSTNAME}.local"
+    echo "  [config]  onlyoffice document server (${OO_HOSTNAME}:9980)..."
+    docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice DocumentServerUrl         --value="http://${OO_HOSTNAME}:9980/" 2>/dev/null || true
     docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice DocumentServerInternalUrl --value="http://onlyoffice/" 2>/dev/null || true
     docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice StorageUrl                --value="http://nextcloud/" 2>/dev/null || true
     docker exec --workdir /var/www/html -u www-data nextcloud php occ config:app:set onlyoffice verify_peer_off           --value="true" 2>/dev/null || true

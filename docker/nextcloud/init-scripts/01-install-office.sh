@@ -6,7 +6,11 @@ set -e
 
 OCC="php /var/www/html/occ"
 
-ONLYOFFICE_BROWSER_URL="http://10.42.0.1:9980/"
+# him-edu.local resolves via:
+#   - Avahi mDNS for wired clients (resolves to wired IP)
+#   - Captive DNS for WiFi clients (all DNS → 10.42.0.1)
+# Both reach OnlyOffice since Docker binds 9980 on 0.0.0.0
+ONLYOFFICE_BROWSER_URL="http://him-edu.local:9980/"
 ONLYOFFICE_INTERNAL_URL="http://onlyoffice/"
 NEXTCLOUD_INTERNAL_URL="http://nextcloud/"
 
