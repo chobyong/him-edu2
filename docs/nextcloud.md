@@ -6,7 +6,7 @@ NextCloud runs as a Docker stack managed by `docker-compose.yml`.
 
 - **Port**: 8081 (HTTP), 8443 (HTTPS)
 - **Compose file**: `/opt/him-edu2/docker/nextcloud/docker-compose.yml`
-- **Stack**: NextCloud, MariaDB, Redis, Collabora, Nginx Proxy Manager
+- **Stack**: NextCloud, MariaDB, Redis, OnlyOffice Document Server, Nginx Proxy Manager
 
 ---
 
@@ -17,22 +17,18 @@ The following apps are installed automatically during setup:
 | App | ID | Description |
 |---|---|---|
 | Notes | `notes` | Personal notes |
-| NextCloud Office | `richdocuments` | Document editing via Collabora |
+| OnlyOffice | `onlyoffice` | Document/spreadsheet/presentation editing |
 | Calendar | `calendar` | Calendar and events |
 | Contacts | `contacts` | Address book |
 | Whiteboard | `whiteboard` | Collaborative whiteboard |
 | Mail | `mail` | Email client |
 | Forms | `forms` | Surveys and forms |
 
+OnlyOffice connects to the `onlyoffice/documentserver` container at port 9980.
+Supported formats: `.docx`, `.xlsx`, `.pptx`, `.odt`, `.ods`, `.odp` and more.
+
 To install apps on an already-running server:
 ```bash
-sudo bash /opt/him-edu2/nextcloud-apps.sh
-```
-
-If the script reports no internet access from the container:
-```bash
-sudo systemctl restart docker
-docker compose -f /opt/him-edu2/docker/nextcloud/docker-compose.yml up -d
 sudo bash /opt/him-edu2/nextcloud-apps.sh
 ```
 
@@ -47,47 +43,54 @@ Setup creates one admin and five generic user accounts:
 | `him` | `ABCD_1234` | Admin |
 | `user1` – `user5` | `User@1234` | Regular user |
 
-Generic users have standard access only — they cannot install apps or manage settings.
-
 To create user accounts on an already-running server:
 ```bash
 sudo bash /opt/him-edu2/nextcloud-users.sh
 ```
 
-To change the default password for generic users, edit `NC_USER_PASS` at the top of `setup.sh` or `nextcloud-users.sh` before running.
-
 ---
 
 ## Troubleshooting
 
+**"Access through untrusted domain" error:**
+```bash
+sudo bash /opt/him-edu2/nextcloud-trust-domains.sh
+```
+This clears and re-adds all interface IPs (wired + wireless AP) automatically.
+
 **Internal Server Error (500) on first visit:**
 ```bash
-# Check container logs
 docker logs nextcloud 2>&1 | tail -30
-
-# Clear stale Redis sessions (most common cause after reinstall)
 docker exec redis redis-cli FLUSHALL
-
-# Then clear browser cookies/cache and reload
+# Clear browser cookies/cache and reload
 ```
 
 **NextCloud DB tables missing (`oc_appconfig` not found):**
 ```bash
-# The DB was wiped but config.php thinks it's installed
-# Mark as not installed and re-run installer
 sudo sed -i "s/'installed' => true,/'installed' => false,/" \
   /opt/him-edu2/docker/nextcloud/config/config.php
-
 sudo chown -R 33:33 /opt/him-edu2/docker/nextcloud/config \
                     /opt/him-edu2/docker/nextcloud/data
-
-docker exec nextcloud chown www-data:www-data /var/www/html/config/config.php
-
 docker exec -u www-data nextcloud php occ maintenance:install \
   --database mysql --database-host nextclouddb \
   --database-name nextcloud --database-user nextcloud \
   --database-pass dbpassword \
   --admin-user admin --admin-pass "TempSetup_9x!"
+```
+
+**OnlyOffice editor not loading:**
+```bash
+# Check OnlyOffice container is running
+sudo docker ps | grep onlyoffice
+
+# Test document server is reachable
+curl -s http://10.42.0.1:9980/healthcheck
+
+# Re-apply OnlyOffice config
+sudo docker exec --workdir /var/www/html -u www-data nextcloud \
+  php occ config:app:set onlyoffice DocumentServerUrl --value="http://10.42.0.1:9980/"
+sudo docker exec --workdir /var/www/html -u www-data nextcloud \
+  php occ config:app:set onlyoffice DocumentServerInternalUrl --value="http://onlyoffice/"
 ```
 
 **Full NextCloud reset (fresh start):**
@@ -96,39 +99,19 @@ docker compose -f /opt/him-edu2/docker/nextcloud/docker-compose.yml down
 sudo rm -rf /opt/him-edu2/docker/nextcloud/nextclouddb/*
 sudo rm -rf /opt/him-edu2/docker/nextcloud/html/
 sudo rm -rf /opt/him-edu2/docker/nextcloud/config/
-sudo bash /home/him/setup.sh
-```
-
-**NextCloud trusted domain error ("Access through untrusted domain"):**
-```bash
-# Add the IP/hostname you're accessing from
-docker exec -u www-data nextcloud php occ config:system:set \
-  trusted_domains 4 --value="192.168.1.100:8081"
-```
-
-**NextCloud login works but /settings/apps gives 500:**
-```bash
-# Stale encrypted sessions in Redis — flush them
-docker exec redis redis-cli FLUSHALL
-# Open a fresh incognito window and log in again
+sudo bash /opt/him-edu2/setup.sh
 ```
 
 **MariaDB container keeps restarting:**
 ```bash
 docker logs nextcloud-db 2>&1 | tail -20
-
-# If "undo tablespace" errors appear, the DB dir has stale files
 docker compose -f /opt/him-edu2/docker/nextcloud/docker-compose.yml stop nextclouddb
-docker compose -f /opt/him-edu2/docker/nextcloud/docker-compose.yml rm -f nextclouddb
 sudo rm -rf /opt/him-edu2/docker/nextcloud/nextclouddb/*
 docker compose -f /opt/him-edu2/docker/nextcloud/docker-compose.yml up -d nextclouddb
 ```
 
 **All containers stopped after reboot:**
 ```bash
-# Containers have restart: unless-stopped so they should auto-start with Docker
 sudo systemctl status docker
-
-# Start manually if needed
 docker compose -f /opt/him-edu2/docker/nextcloud/docker-compose.yml up -d
 ```
